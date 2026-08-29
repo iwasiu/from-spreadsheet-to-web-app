@@ -1,0 +1,17 @@
+# System files
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+
+# IDE files
+.vscode/
+.idea/
+
+# Google Apps Script specific
+*.clasp.json
+.clasp/
+
+# Backup files
+*.bak
+*.backup
