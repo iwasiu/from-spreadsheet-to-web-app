@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!--
+      =====================================================
+      FROM SPREADSHEET TO WEB APP - CHAPTER 4
+      Bulk Email Sender - Web App Interface
+      
+      This HTML file provides a user-friendly interface
+      for sending bulk emails to customers.
+      =====================================================
+    -->
+    <style>
+      /* ===== Base Reset ===== */
+      * {
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        background: #f4f7fc;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1a2a3a;
+        line-height: 1.6;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      /* ===== Container ===== */
+      .container {
+        max-width: 720px;
+        width: 100%;
+        background: #ffffff;
+        padding: 40px 45px;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      }
+      
+      /* ===== Headings ===== */
+      h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin-top: 0;
+        margin-bottom: 4px;
+        color: #0b1a2b;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      h1 .emoji {
+        font-size: 32px;
+      }
+      
+      .subtitle {
+        color: #5e6f8d;
+        font-size: 16px;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #eef2f7;
+        padding-bottom: 16px;
+      }
+      
+      /* ===== Info Box ===== */
+      .info-box {
+        background: #f8faff;
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+        border: 1px solid #e6edf5;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      
+      .info-box .label {
+        color: #5e6f8d;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      
+      .info-box .value {
+        font-size: 24px;
+        font-weight: 600;
+        color: #0b1a2b;
+      }
+      
+      .info-box .value.loading {
+        color: #8a9bb5;
+        font-weight: 400;
+        font-size: 16px;
+      }
+      
+      /* ===== Warning Box ===== */
+      .warning-box {
+        background: #fff8e6;
+        border-radius: 10px;
+        padding: 14px 18px;
+        margin-bottom: 20px;
+        border-left: 4px solid #f5a623;
+        font-size: 14px;
+        color: #5a4a1a;
+      }
+      
+      .warning-box strong {
+        color: #8a6d1a;
+      }
+      
+      /* ===== Button Group ===== */
+      .button-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin: 16px 0;
+      }
+      
+      .btn-primary {
+        background: #1a73e8;
+        color: #ffffff;
+        border: none;
+        padding: 12px 32px;
+        font-size: 16px;
+        font-weight: 500;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.2s, opacity 0.2s, transform 0.1s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        justify-content: center;
+        min-width: 140px;
+      }
+      
+      .btn-primary:hover {
+        background: #1557b0;
+      }
+      
+      .btn-primary:active {
+        transform: scale(0.97);
+      }
+      
+      .btn-primary:disabled {
+        background: #a0b8d4;
+        cursor: not-allowed;
+        opacity: 0.7;
+        transform: none;
+      }
+      
+      .btn-secondary {
+        background: #eef2f7;
+        color: #1a2a3a;
+        border: none;
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: 500;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        justify-content: center;
+        min-width: 100px;
+      }
+      
+      .btn-secondary:hover {
+        background: #dce3ed;
+      }
+      
+      .btn-secondary:active {
+        transform: scale(0.97);
+      }
+      
+      .btn-danger {
+        background: #ea4335;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: 500;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex: 0.5;
+        justify-content: center;
+      }
+      
+      .btn-danger:hover {
+        background: #c5221f;
+      }
+      
+      /* ===== Loading Indicator ===== */
+      #loading {
+        display: none;
+        padding: 12px 16px;
+        background: #eaf2fd;
+        border-radius: 8px;
+        border-left: 4px solid #1a73e8;
+        margin: 12px 0;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+        color: #1a2a3a;
+      }
+      
+      #loading .spinner {
+        display: inline-block;
+        animation: spin 1s linear infinite;
+        font-size: 18px;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* ===== Progress Bar ===== */
+      .progress-container {
+        display: none;
+        margin: 12px 0;
+        background: #eef2f7;
+        border-radius: 20px;
+        overflow: hidden;
+        height: 8px;
+      }
+      
+      .progress-container.active {
+        display: block;
+      }
+      
+      .progress-bar {
+        height: 100%;
+        background: #1a73e8;
+        width: 0%;
+        transition: width 0.5s ease;
+        border-radius: 20px;
+      }
+      
+      /* ===== Result Display ===== */
+      #result {
+        margin-top: 20px;
+        padding: 20px 24px;
+        background: #f8faff;
+        border-radius: 12px;
+        border: 1px solid #e6edf5;
+        display: none;
+        white-space: pre-wrap;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        line-height: 1.8;
+        overflow-x: auto;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      
+      #result.success {
+        border-left: 4px solid #34a853;
+        background: #f6fcf9;
+      }
+      
+      #result.error {
+        border-left: 4px solid #d93025;
+        background: #fff5f5;
+      }
+      
+      #result.info {
+        border-left: 4px solid #1a73e8;
+        background: #f0f7ff;
+      }
+      
+      /* ===== Footer ===== */
+      .footer {
+        margin-top: 28px;
+        font-size: 13px;
+        color: #8a9bb5;
+        text-align: center;
+        border-top: 1px solid #eef2f7;
+        padding-top: 18px;
+      }
+      
+      .footer a {
+        color: #1a73e8;
+        text-decoration: none;
+      }
+      
+      .footer a:hover {
+        text-decoration: underline;
+      }
+      
+      .footer .book-link {
+        font-weight: 500;
+        color: #1a2a3a;
+      }
+      
+      /* ===== Responsive Design ===== */
+      @media (max-width: 600px) {
+        body {
+          padding: 16px;
+        }
+        .container {
+          padding: 24px 18px;
+          border-radius: 12px;
+        }
+        h1 {
+          font-size: 22px;
+        }
+        h1 .emoji {
+          font-size: 26px;
+        }
+        .button-group {
+          flex-direction: column;
+        }
+        .btn-primary,
+        .btn-secondary,
+        .btn-danger {
+          width: 100%;
+          flex: none;
+        }
+        .info-box {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .info-box .value {
+          font-size: 20px;
+        }
+        #result {
+          font-size: 12px;
+          padding: 16px 18px;
+          max-height: 300px;
+        }
+      }
+      
+      @media (max-width: 400px) {
+        .container {
+          padding: 16px 12px;
+        }
+        h1 {
+          font-size: 19px;
+        }
+        .subtitle {
+          font-size: 14px;
+        }
+        .btn-primary,
+        .btn-secondary,
+        .btn-danger {
+          font-size: 14px;
+          padding: 10px 16px;
+        }
+      }
+    </style>
+  </head>
+  
+  <body>
+    <div class="container">
+      <!-- ===== HEADER ===== -->
+      <h1>
+        <span class="emoji">📧</span> Bulk Email Sender
+      </h1>
+      <div class="subtitle">
+        Send personalized emails to all customers in your spreadsheet.
+      </div>
+      
+      <!-- ===== WARNING ===== -->
+      <div class="warning-box">
+        <strong>⚠️ Important:</strong> Free Gmail accounts can send ~100 emails/day.
+        Test with a small dataset first using the <strong>Preview</strong> button.
+      </div>
+      
+      <!-- ===== INFO BOX ===== -->
+      <div class="info-box">
+        <span class="label">📊 Number of Customers</span>
+        <span class="value" id="customerCount">Loading...</span>
+      </div>
+      
+      <!-- ===== BUTTONS ===== -->
+      <div class="button-group">
+        <button class="btn-primary" id="sendBtn">
+          📤 Send All Emails
+        </button>
+        <button class="btn-secondary" id="previewBtn">
+          👁️ Preview First Email
+        </button>
+        <button class="btn-secondary" id="refreshBtn">
+          🔄 Refresh Count
+        </button>
+      </div>
+      
+      <!-- ===== LOADING ===== -->
+      <div id="loading">
+        <span class="spinner">⏳</span> Sending emails... Please wait.
+      </div>
+      
+      <!-- ===== PROGRESS BAR ===== -->
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      
+      <!-- ===== RESULT ===== -->
+      <div id="result"></div>
+      
+      <!-- ===== FOOTER ===== -->
+      <div class="footer">
+        Built with ❤️ using Google Apps Script
+        <br>
+        📖 From <strong class="book-link">From Spreadsheet to Web App</strong>
+      </div>
+    </div>
+    
+    <!-- ===================================================== -->
+    <!-- JAVASCRIPT: Frontend Logic -->
+    <!-- ===================================================== -->
+    <script>
+      // =====================================================
+      // DOM REFERENCES
+      // =====================================================
+      var customerCount = document.getElementById('customerCount');
+      var sendBtn = document.getElementById('sendBtn');
+      var previewBtn = document.getElementById('previewBtn');
+      var refreshBtn = document.getElementById('refreshBtn');
+      var loading = document.getElementById('loading');
+      var resultDiv = document.getElementById('result');
+      var progressContainer = document.getElementById('progressContainer');
+      var progressBar = document.getElementById('progressBar');
+      
+      // =====================================================
+      // LOAD CUSTOMER COUNT
+      // =====================================================
+      function loadCustomerCount() {
+        customerCount.textContent = 'Loading...';
+        customerCount.className = 'value loading';
+        
+        google.script.run
+          .withSuccessHandler(function(count) {
+            customerCount.textContent = count + ' customers';
+            customerCount.className = 'value';
+          })
+          .withFailureHandler(function(error) {
+            customerCount.textContent = '⚠️ Error loading';
+            customerCount.className = 'value loading';
+          })
+          .getCustomerCountWebApp();
+      }
+      
+      // =====================================================
+      // SEND EMAILS
+      // =====================================================
+      sendBtn.addEventListener('click', function() {
+        // Confirm before sending
+        if (!confirm('⚠️ This will send emails to ALL customers in your sheet.\n\nAre you sure you want to continue?')) {
+          return;
+        }
+        
+        // Show loading
+        loading.style.display = 'flex';
+        resultDiv.style.display = 'none';
+        sendBtn.disabled = true;
+        sendBtn.textContent = '⏳ Sending...';
+        progressContainer.className = 'progress-container active';
+        progressBar.style.width = '0%';
+        
+        // Simulate progress (visual only)
+        var progress = 0;
+        var progressInterval = setInterval(function() {
+          progress += 2;
+          if (progress > 90) {
+            clearInterval(progressInterval);
+          }
+          progressBar.style.width = Math.min(progress, 90) + '%';
+        }, 200);
+        
+        // Call the backend
+        google.script.run
+          .withSuccessHandler(function(results) {
+            clearInterval(progressInterval);
+            progressBar.style.width = '100%';
+            
+            setTimeout(function() {
+              loading.style.display = 'none';
+              sendBtn.disabled = false;
+              sendBtn.textContent = '📤 Send All Emails';
+              progressContainer.className = 'progress-container';
+              
+              // Show results
+              var output = '📧 EMAIL SENDING COMPLETE\n';
+              output += '━'.repeat(42) + '\n\n';
+              output += results.join('\n');
+              
+              resultDiv.textContent = output;
+              resultDiv.style.display = 'block';
+              resultDiv.className = 'success';
+              
+              // Refresh the customer count
+              loadCustomerCount();
+            }, 500);
+          })
+          .withFailureHandler(function(error) {
+            clearInterval(progressInterval);
+            loading.style.display = 'none';
+            sendBtn.disabled = false;
+            sendBtn.textContent = '📤 Send All Emails';
+            progressContainer.className = 'progress-container';
+            
