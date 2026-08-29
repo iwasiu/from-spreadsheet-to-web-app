@@ -1,0 +1,11 @@
+Name,Email,Balance,LastPurchase,Tier
+John Smith,john@example.com,2450,2024-01-15,Gold
+Sarah Jones,sarah@example.com,850,2024-01-20,Silver
+Michael Brown,michael@example.com,12300,2023-12-01,Platinum
+Emily Davis,emily@example.com,3200,2024-02-01,Gold
+David Wilson,david@example.com,150,2023-11-15,Bronze
+Lisa Thompson,lisa@example.com,5800,2024-01-28,Platinum
+James Anderson,james@example.com,1200,2023-10-20,Silver
+Maria Garcia,maria@example.com,920,2024-02-05,Gold
+Robert Chen,robert@example.com,4300,2024-01-10,Platinum
+Patricia Brown,patricia@example.com,340,2023-09-01,Bronze
