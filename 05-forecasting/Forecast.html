@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!--
+      =====================================================
+      FROM SPREADSHEET TO WEB APP - CHAPTER 5
+      Sales Forecasting Dashboard
+      
+      This HTML file provides an interactive dashboard
+      for viewing sales forecasts with charts.
+      =====================================================
+    -->
+    <style>
+      /* ===== Base Reset ===== */
+      * {
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        background: #f4f7fc;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1a2a3a;
+        line-height: 1.6;
+        min-height: 100vh;
+      }
+      
+      /* ===== Container ===== */
+      .container {
+        max-width: 1100px;
+        width: 100%;
+        margin: 0 auto;
+        background: #ffffff;
+        padding: 35px 40px;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      }
+      
+      /* ===== Headings ===== */
+      h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin-top: 0;
+        margin-bottom: 4px;
+        color: #0b1a2b;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      h1 .emoji {
+        font-size: 32px;
+      }
+      
+      .subtitle {
+        color: #5e6f8d;
+        font-size: 16px;
+        margin-bottom: 24px;
+        border-bottom: 2px solid #eef2f7;
+        padding-bottom: 16px;
+      }
+      
+      /* ===== Controls ===== */
+      .controls {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+        align-items: center;
+        background: #f8faff;
+        padding: 16px 20px;
+        border-radius: 10px;
+        border: 1px solid #e6edf5;
+      }
+      
+      .controls label {
+        font-weight: 500;
+        font-size: 14px;
+        color: #1a2a3a;
+      }
+      
+      .controls select {
+        padding: 8px 16px;
+        border: 2px solid #dce3ed;
+        border-radius: 8px;
+        font-size: 14px;
+        background: white;
+        color: #1a2a3a;
+        cursor: pointer;
+        transition: border-color 0.2s;
+        min-width: 120px;
+      }
+      
+      .controls select:focus {
+        border-color: #1a73e8;
+        outline: none;
+      }
+      
+      .btn-primary {
+        background: #1a73e8;
+        color: white;
+        border: none;
+        padding: 8px 24px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s, opacity 0.2s;
+      }
+      
+      .btn-primary:hover {
+        background: #1557b0;
+      }
+      
+      .btn-primary:disabled {
+        background: #a0b8d4;
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+      
+      .btn-secondary {
+        background: #eef2f7;
+        color: #1a2a3a;
+        border: none;
+        padding: 8px 20px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      
+      .btn-secondary:hover {
+        background: #dce3ed;
+      }
+      
+      /* ===== Stats Grid ===== */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      
+      .stat-card {
+        background: #f8faff;
+        border: 1px solid #e6edf5;
+        border-radius: 10px;
+        padding: 14px 18px;
+        text-align: center;
+      }
+      
+      .stat-card .label {
+        font-size: 12px;
+        color: #5e6f8d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+      }
+      
+      .stat-card .value {
+        font-size: 22px;
+        font-weight: 600;
+        color: #0b1a2b;
+        margin-top: 4px;
+      }
+      
+      .stat-card .value.positive {
+        color: #34a853;
+      }
+      
+      .stat-card .value.negative {
+        color: #d93025;
+      }
+      
+      .stat-card .value .currency {
+        font-size: 16px;
+        font-weight: 400;
+        color: #5e6f8d;
+      }
+      
+      /* ===== Chart Container ===== */
+      .chart-container {
+        background: #fafcff;
+        border-radius: 10px;
+        border: 1px solid #e6edf5;
+        padding: 16px;
+        margin-bottom: 20px;
+        min-height: 350px;
+      }
+      
+      #chartArea {
+        width: 100%;
+        height: 350px;
+      }
+      
+      /* ===== Results Table ===== */
+      .results-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        margin-top: 8px;
+      }
+      
+      .results-table th {
+        background: #f4f7fc;
+        text-align: left;
+        padding: 10px 14px;
+        font-weight: 600;
+        color: #1a2a3a;
+        border-bottom: 2px solid #dce3ed;
+      }
+      
+      .results-table td {
+        padding: 8px 14px;
+        border-bottom: 1px solid #eef2f7;
+      }
+      
+      .results-table tr:hover {
+        background: #f8faff;
+      }
+      
+      .results-table .historical {
+        color: #1a2a3a;
+      }
+      
+      .results-table .future {
+        color: #1a73e8;
+        font-weight: 500;
+      }
+      
+      .results-table .outlier {
+        color: #d93025;
+      }
+      
+      /* ===== Loading ===== */
+      #loading {
+        display: none;
+        padding: 20px;
+        text-align: center;
+        color: #5e6f8d;
+      }
+      
+      #loading .spinner {
+        display: inline-block;
+        animation: spin 1s linear infinite;
+        font-size: 24px;
+        margin-bottom: 8px;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* ===== Error ===== */
+      #error {
+        display: none;
+        padding: 16px 20px;
+        background: #fff5f5;
+        border-radius: 10px;
+        border-left: 4px solid #d93025;
+        color: #a12b2b;
+        margin-bottom: 16px;
+      }
+      
+      /* ===== Footer ===== */
+      .footer {
+        margin-top: 28px;
+        font-size: 13px;
+        color: #8a9bb5;
+        text-align: center;
+        border-top: 1px solid #eef2f7;
+        padding-top: 18px;
+      }
+      
+      .footer .book-link {
+        font-weight: 500;
+        color: #1a2a3a;
+      }
+      
+      /* ===== Responsive ===== */
+      @media (max-width: 768px) {
+        body {
+          padding: 16px;
+        }
+        .container {
+          padding: 20px 16px;
+          border-radius: 12px;
+        }
+        h1 {
+          font-size: 22px;
+        }
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .stat-card .value {
+          font-size: 18px;
+        }
+        .controls {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        #chartArea {
+          height: 250px;
+        }
+        .results-table {
+          font-size: 12px;
+        }
+        .results-table th,
+        .results-table td {
+          padding: 6px 10px;
+        }
+      }
+      
+      @media (max-width: 400px) {
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  
+  <body>
+    <div class="container">
+      <!-- ===== HEADER ===== -->
+      <h1>
+        <span class="emoji">📈</span> Sales Forecast Dashboard
+      </h1>
+      <div class="subtitle">
+        Predict future sales using linear regression. Enter your historical data in Google Sheets.
+      </div>
+      
+      <!-- ===== CONTROLS ===== -->
+      <div class="controls">
+        <label for="periodsSelect">Forecast Period:</label>
+        <select id="periodsSelect">
+          <option value="3">3 Months</option>
+          <option value="6" selected>6 Months</option>
+          <option value="12">12 Months</option>
+          <option value="24">24 Months</option>
+        </select>
+        <button class="btn-primary" id="generateBtn">🔮 Generate Forecast</button>
+        <button class="btn-secondary" id="refreshBtn">🔄 Refresh Data</button>
+      </div>
+      
+      <!-- ===== ERROR ===== -->
+      <div id="error"></div>
+      
+      <!-- ===== LOADING ===== -->
+      <div id="loading">
+        <div class="spinner">⏳</div>
+        <div>Generating forecast... Please wait.</div>
+      </div>
+      
+      <!-- ===== STATS ===== -->
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="label">Forecast Accuracy</div>
+          <div class="value" id="rSquared">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Growth Rate</div>
+          <div class="value" id="growthRate">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Next Month Forecast</div>
+          <div class="value" id="nextForecast">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Last Month Actual</div>
+          <div class="value" id="lastActual">—</div>
+        </div>
+      </div>
+      
+      <!-- ===== CHART ===== -->
+      <div class="chart-container">
+        <div id="chartArea"></div>
+      </div>
+      
+      <!-- ===== RESULTS TABLE ===== -->
+      <div id="tableContainer">
+        <table class="results-table" id="resultsTable">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Historical Sales</th>
+              <th>Predicted Sales</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr>
+              <td colspan="4" style="text-align: center; color: #8a9bb5; padding: 40px 0;">
+                Click "Generate Forecast" to view predictions
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- ===== FOOTER ===== -->
+      <div class="footer">
+        Built with ❤️ using Google Apps Script &amp; Google Charts
+        <br>
+        📖 From <strong class="book-link">From Spreadsheet to Web App</strong>
+      </div>
+    </div>
+    
+    <!-- ===================================================== -->
+    <!-- JAVASCRIPT: Frontend Logic -->
+    <!-- ===================================================== -->
+    <script>
+      // =====================================================
+      // DOM REFERENCES
+      // =====================================================
+      var periodsSelect = document.getElementById('periodsSelect');
+      var generateBtn = document.getElementById('generateBtn');
+      var refreshBtn = document.getElementById('refreshBtn');
+      var loading = document.getElementById('loading');
+      var errorDiv = document.getElementById('error');
+      var rSquaredEl = document.getElementById('rSquared');
+      var growthRateEl = document.getElementById('growthRate');
+      var nextForecastEl = document.getElementById('nextForecast');
+      var lastActualEl = document.getElementById('lastActual');
+      var tableBody = document.getElementById('tableBody');
+      var chartArea = document.getElementById('chartArea');
+      
+      // =====================================================
+      // GOOGLE CHARTS LOADER
+      // =====================================================
+      // Load the Google Charts library
+      google.charts.load('current', { packages: ['corechart'] });
+      
+      // =====================================================
+      // GENERATE FORECAST
+      // =====================================================
+      function generateForecast() {
+        var periods = parseInt(periodsSelect.value);
+        
+        // Show loading
+        loading.style.display = 'block';
+        errorDiv.style.display = 'none';
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generating...';
+        
+        // Call the backend
+        google.script.run
+          .withSuccessHandler(function(response) {
+            loading.style.display = 'none';
+            generateBtn.disabled = false;
+            generateBtn.textContent = '🔮 Generate Forecast';
+            
+            if (!response.success) {
+              showError('❌ ' + response.error);
+              return;
+            }
+            
+            displayForecast(response);
+          })
+          .withFailureHandler(function(error) {
+            loading.style.display = 'none';
+            generateBtn.disabled = false;
+            generateBtn.textContent = '🔮 Generate Forecast';
+            showError('❌ Error: ' + error.message);
+          })
+          .getForecastDataWebApp(periods);
+      }
+      
+      // =====================================================
+      // DISPLAY FORECAST RESULTS
+      // =====================================================
+      function displayForecast(data) {
+        // --- Update stats ---
+        var rSquared = data.regression.rSquared;
+        rSquaredEl.textContent = (rSquared * 100).toFixed(1) + '%';
+        rSquaredEl.className = 'value ' + (rSquared > 0.7 ? 'positive' : 'negative');
+        
+        var growthRate = data.summary.growthRate;
+        growthRateEl.textContent = growthRate.toFixed(1) + '%';
+        growthRateEl.className = 'value ' + (growthRate > 0 ? 'positive' : 'negative');
+        
+        nextForecastEl.innerHTML = '<span class="currency">$</span>' + data.summary.nextPrediction.toFixed(2);
+        lastActualEl.innerHTML = '<span class="currency">$</span>' + data.summary.lastActual.toFixed(2);
+        
+        // --- Build table ---
+        var html = '';
+        
+        // Historical data
+        data.historical.forEach(function(item) {
+          var diff = item.actual - item.predicted;
+          var status = Math.abs(diff) / item.actual < 0.1 ? '✅ On Track' : '⚠️ Off Track';
+          html += '<tr class="historical">';
+          html += '<td>' + getMonthLabel(item.period) + '</td>';
+          html += '<td>$' + item.actual.toFixed(2) + '</td>';
+          html += '<td>$' + item.predicted.toFixed(2) + '</td>';
+          html += '<td>' + status + '</td>';
+          html += '</tr>';
+        });
+        
+        // Future predictions
+        data.future.forEach(function(item) {
+          html += '<tr class="future">';
+          html += '<td>' + getMonthLabel(item.period) + ' 🔮</td>';
+          html += '<td>—</td>';
+          html += '<td>' + item.formatted + '</td>';
+          html += '<td>📈 Predicted</td>';
+          html += '</tr>';
+        });
+        
+        tableBody.innerHTML = html;
+        
+        // --- Draw chart ---
+        drawChart(data);
+      }
+      
+      // =====================================================
+      // DRAW CHART
+      // =====================================================
+      function drawChart(data) {
+        // Prepare data for chart
+        var chartData = [['Month', 'Actual Sales', 'Predicted Sales']];
+        
+        // Historical data
+        data.historical.forEach(function(item) {
+          chartData.push([
+            getMonthLabel(item.period),
+            item.actual,
+            item.predicted
+          ]);
+        });
+        
+        // Future predictions (add as predicted only)
+        data.future.forEach(function(item) {
+          chartData.push([
+            getMonthLabel(item.period) + ' (F)',
+            null,
+            item.predicted
+          ]);
+        });
+        
+        // Create data table
+        var dataTable = google.visualization.arrayToDataTable(chartData);
+        
+        // Set chart options
+        var options = {
+          title: 'Sales Forecast',
+          titleTextStyle: { color: '#1a2a3a', fontSize: 16, bold: true },
+          curveType: 'function',
+          legend: { position: 'top', alignment: 'center' },
+          hAxis: {
+            title: 'Month',
+            textStyle: { color: '#5e6f8d', fontSize: 11 },
+            titleTextStyle: { color: '#1a2a3a', fontSize: 12 }
+          },
+          vAxis: {
+            title: 'Sales ($)',
+            textStyle: { color: '#5e6f8d', fontSize: 11 },
+            titleTextStyle: { color: '#1a2a3a', fontSize: 12 },
+            format: '$#,###'
+          },
+          colors: ['#1a73e8', '#34a853'],
+          backgroundColor: 'transparent',
+          chartArea: {
+            left: 70,
+            right: 30,
+            top: 50,
+            bottom: 60
+          },
+          pointSize: 5,
+          lineWidth: 2,
+          intervals: { style: 'area' },
+          legend: { position: 'top' }
+        };
+        
+        // Draw chart
+        var chart = new google.visualization.LineChart(chartArea);
+        chart.draw(dataTable, options);
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+          chart.draw(dataTable, options);
+        });
+      }
+      
+      // =====================================================
+      // HELPER: Get Month Label
+      // =====================================================
+      function getMonthLabel(monthNumber) {
+        // Convert month number to date
+        var year = Math.floor(monthNumber / 12);
+        var month = monthNumber % 12;
+        var date = new Date(year, month, 1);
+        
+        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return months[month] + ' ' + year;
+      }
+      
+      // =====================================================
+      // HELPER: Show Error
+      // =====================================================
+      function showError(message) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+      }
+      
+      // =====================================================
+      // EVENT LISTENERS
+      // =====================================================
+      generateBtn.addEventListener('click', function() {
+        generateForecast();
+      });
+      
+      refreshBtn.addEventListener('click', function() {
+        // Clear existing data and regenerate
+        tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #8a9bb5; padding: 40px 0;">Refreshing data...</td></tr>';
+        rSquaredEl.textContent = '—';
+        growthRateEl.textContent = '—';
+        nextForecastEl.textContent = '—';
+        lastActualEl.textContent = '—';
+        generateForecast();
+      });
+      
+      // Keyboard shortcuts
+      document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          generateBtn.click();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+          e.preventDefault();
+          refreshBtn.click();
+        }
+      });
+      
+      // =====================================================
+      // INITIAL LOAD
+      // =====================================================
+      document.addEventListener('DOMContentLoaded', function() {
+        // Auto-generate forecast on load
+        generateForecast();
+        
+        console.log('📈 Keyboard shortcuts:');
+        console.log('  Ctrl+Enter = Generate forecast');
+        console.log('  Ctrl+R     = Refresh data');
+      });
+      
+      // =====================================================
+      // END OF JAVASCRIPT
+      // =====================================================
+    </script>
+    <!-- Load Google Charts after the page is ready -->
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+  </body>
+</html>
