@@ -1,1 +1,664 @@
-<!-- Chapter 2: Index.html - Full code coming soon -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!--
+      =====================================================
+      FROM SPREADSHEET TO WEB APP - CHAPTER 2
+      Frontend: HTML/CSS/JavaScript
+      
+      This file contains the complete user interface for
+      the Sales Analyzer Web App.
+      
+      To use: Copy this entire file into a new HTML file
+      in your Apps Script project (named "Index").
+      =====================================================
+    -->
+    <style>
+      /* 
+        =====================================================
+        STYLING: The Professional Look
+        =====================================================
+        This CSS creates a clean, modern, and trustworthy
+        design that business professionals will appreciate.
+        
+        Design Principles:
+        - Clean whitespace for readability
+        - Blue accent color for trust and professionalism
+        - Rounded corners for a modern feel
+        - Subtle shadows for depth
+      */
+      
+      /* ===== Base Reset ===== */
+      * {
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        background: #f4f7fc;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1a2a3a;
+        line-height: 1.6;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      /* ===== Container ===== */
+      .container {
+        max-width: 720px;
+        width: 100%;
+        margin: 0 auto;
+        background: #ffffff;
+        padding: 40px 45px;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      }
+      
+      /* ===== Headings ===== */
+      h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin-top: 0;
+        margin-bottom: 4px;
+        color: #0b1a2b;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      h1 .emoji {
+        font-size: 32px;
+      }
+      
+      .subtitle {
+        color: #5e6f8d;
+        font-size: 16px;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #eef2f7;
+        padding-bottom: 16px;
+      }
+      
+      /* ===== Labels ===== */
+      label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: #1a2a3a;
+      }
+      
+      label .hint {
+        font-weight: 400;
+        color: #7a8ba5;
+        font-size: 13px;
+      }
+      
+      /* ===== Textarea ===== */
+      textarea {
+        width: 100%;
+        height: 160px;
+        padding: 14px 16px;
+        font-size: 14px;
+        font-family: 'Courier New', monospace;
+        border: 2px solid #dce3ed;
+        border-radius: 10px;
+        box-sizing: border-box;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        resize: vertical;
+        background: #fafcff;
+        color: #1a2a3a;
+      }
+      
+      textarea:focus {
+        border-color: #1a73e8;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.12);
+      }
+      
+      textarea::placeholder {
+        color: #b0c0d4;
+      }
+      
+      /* ===== Stats Bar ===== */
+      .stats-bar {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin: 12px 0 8px 0;
+        font-size: 13px;
+        color: #5e6f8d;
+      }
+      
+      .stats-bar span {
+        background: #f4f7fc;
+        padding: 4px 12px;
+        border-radius: 20px;
+      }
+      
+      .stats-bar .count {
+        font-weight: 600;
+        color: #1a2a3a;
+      }
+      
+      /* ===== Button Group ===== */
+      .button-group {
+        margin: 20px 0 16px 0;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      
+      .btn-primary {
+        background: #1a73e8;
+        color: #ffffff;
+        border: none;
+        padding: 12px 32px;
+        font-size: 16px;
+        font-weight: 500;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s, opacity 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        justify-content: center;
+        min-width: 140px;
+      }
+      
+      .btn-primary:hover {
+        background: #1557b0;
+      }
+      
+      .btn-primary:active {
+        transform: scale(0.97);
+      }
+      
+      .btn-primary:disabled {
+        background: #a0b8d4;
+        cursor: not-allowed;
+        transform: none;
+        opacity: 0.7;
+      }
+      
+      .btn-secondary {
+        background: #eef2f7;
+        color: #1a2a3a;
+        border: none;
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: 500;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        justify-content: center;
+        min-width: 100px;
+      }
+      
+      .btn-secondary:hover {
+        background: #dce3ed;
+      }
+      
+      .btn-secondary:active {
+        transform: scale(0.97);
+      }
+      
+      /* ===== Loading Indicator ===== */
+      #loading {
+        display: none;
+        color: #1a73e8;
+        font-weight: 500;
+        margin: 12px 0;
+        padding: 12px 16px;
+        background: #eaf2fd;
+        border-radius: 8px;
+        border-left: 4px solid #1a73e8;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      #loading .spinner {
+        display: inline-block;
+        animation: spin 1s linear infinite;
+        font-size: 18px;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* ===== Result Display ===== */
+      #result {
+        margin-top: 20px;
+        padding: 20px 24px;
+        background: #f8faff;
+        border-radius: 12px;
+        border: 1px solid #e6edf5;
+        display: none;
+        white-space: pre-wrap;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        line-height: 1.8;
+        transition: all 0.3s;
+        overflow-x: auto;
+      }
+      
+      #result.success {
+        border-left: 4px solid #34a853;
+        background: #f6fcf9;
+      }
+      
+      #result.error {
+        background: #fff5f5;
+        border-color: #f5c6c6;
+        border-left: 4px solid #d93025;
+        color: #a12b2b;
+      }
+      
+      #result .result-label {
+        color: #5e6f8d;
+        font-weight: 400;
+      }
+      
+      #result .result-value {
+        font-weight: 600;
+        color: #0b1a2b;
+      }
+      
+      #result .outlier-list {
+        color: #d93025;
+        font-weight: 600;
+      }
+      
+      #result .divider {
+        color: #dce3ed;
+      }
+      
+      /* ===== Keyboard Shortcut Hint ===== */
+      .shortcut-hint {
+        font-size: 12px;
+        color: #8a9bb5;
+        margin-top: 4px;
+        margin-bottom: 0;
+      }
+      
+      .shortcut-hint kbd {
+        background: #eef2f7;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 11px;
+        border: 1px solid #dce3ed;
+      }
+      
+      /* ===== Footer ===== */
+      .footer {
+        margin-top: 28px;
+        font-size: 13px;
+        color: #8a9bb5;
+        text-align: center;
+        border-top: 1px solid #eef2f7;
+        padding-top: 18px;
+      }
+      
+      .footer a {
+        color: #1a73e8;
+        text-decoration: none;
+      }
+      
+      .footer a:hover {
+        text-decoration: underline;
+      }
+      
+      .footer .book-link {
+        font-weight: 500;
+        color: #1a2a3a;
+      }
+      
+      /* ===== Responsive Design ===== */
+      @media (max-width: 600px) {
+        body {
+          padding: 16px;
+        }
+        .container {
+          padding: 24px 18px;
+          border-radius: 12px;
+        }
+        h1 {
+          font-size: 22px;
+        }
+        h1 .emoji {
+          font-size: 26px;
+        }
+        .button-group {
+          flex-direction: column;
+        }
+        .btn-primary,
+        .btn-secondary {
+          width: 100%;
+          flex: none;
+        }
+        textarea {
+          height: 120px;
+          font-size: 13px;
+        }
+        .stats-bar {
+          font-size: 12px;
+          gap: 8px;
+        }
+        #result {
+          font-size: 13px;
+          padding: 16px 18px;
+        }
+      }
+      
+      @media (max-width: 400px) {
+        .container {
+          padding: 16px 12px;
+        }
+        h1 {
+          font-size: 19px;
+        }
+        .subtitle {
+          font-size: 14px;
+        }
+        .btn-primary,
+        .btn-secondary {
+          font-size: 14px;
+          padding: 10px 16px;
+        }
+      }
+    </style>
+  </head>
+  
+  <body>
+    <div class="container">
+      <!-- ===== HEADER ===== -->
+      <h1>
+        <span class="emoji">📊</span> Sales Analyzer
+      </h1>
+      <div class="subtitle">
+        Paste your sales numbers below. We'll calculate the total, average, and flag any outliers.
+      </div>
+      
+      <!-- ===== INPUT AREA ===== -->
+      <label for="dataInput">
+        Enter Sales Data
+        <span class="hint">(one number per line)</span>
+      </label>
+      <textarea 
+        id="dataInput" 
+        placeholder="1200&#10;1450&#10;980&#10;2100&#10;450"
+        aria-label="Enter your sales numbers, one per line"
+        spellcheck="false"
+      >1200
+1450
+980
+2100
+450
+1100
+1300
+1020
+1550
+890
+1250
+1400
+950
+1700
+1150
+1350
+1080
+1500
+980
+1120</textarea>
+      
+      <!-- ===== STATS BAR ===== -->
+      <div class="stats-bar" id="statsBar">
+        <span>📝 <span class="count" id="lineCount">20</span> numbers detected</span>
+        <span>💡 Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to analyze</span>
+      </div>
+      
+      <!-- ===== BUTTONS ===== -->
+      <div class="button-group">
+        <button class="btn-primary" id="analyzeBtn">
+          🔍 Analyze Sales
+        </button>
+        <button class="btn-secondary" id="sampleBtn">
+          📋 Load Sample
+        </button>
+        <button class="btn-secondary" id="clearBtn">
+          🗑️ Clear
+        </button>
+      </div>
+      
+      <!-- ===== LOADING INDICATOR ===== -->
+      <div id="loading">
+        <span class="spinner">⏳</span> Analyzing your data... Please wait.
+      </div>
+      
+      <!-- ===== RESULTS AREA ===== -->
+      <div id="result"></div>
+      
+      <!-- ===== FOOTER ===== -->
+      <div class="footer">
+        Powered by <a href="https://developers.google.com/apps-script" target="_blank" rel="noopener">Google Apps Script</a>
+        &nbsp;·&nbsp; Built with ❤️ by <em>you</em>
+        <br>
+        <span class="book-link">📖 From <strong>From Spreadsheet to Web App</strong></span>
+      </div>
+    </div>
+    
+    <!--
+      =====================================================
+      JAVASCRIPT: Frontend Logic
+      =====================================================
+      This script handles user interactions, data parsing,
+      and communication with the backend.
+    -->
+    <script>
+      // =====================================================
+      // DOM REFERENCES
+      // =====================================================
+      var dataInput = document.getElementById('dataInput');
+      var analyzeBtn = document.getElementById('analyzeBtn');
+      var clearBtn = document.getElementById('clearBtn');
+      var sampleBtn = document.getElementById('sampleBtn');
+      var loading = document.getElementById('loading');
+      var resultDiv = document.getElementById('result');
+      var lineCount = document.getElementById('lineCount');
+      
+      // =====================================================
+      // SAMPLE DATA
+      // =====================================================
+      var SAMPLE_DATA = [
+        1200, 1450, 980, 2100, 450,
+        1100, 1300, 1020, 1550, 890,
+        1250, 1400, 950, 1700, 1150,
+        1350, 1080, 1500, 980, 1120
+      ];
+      
+      // =====================================================
+      // LIVE COUNTER: Update line count as user types
+      // =====================================================
+      dataInput.addEventListener('input', function() {
+        updateLineCount();
+      });
+      
+      function updateLineCount() {
+        var lines = dataInput.value.split('\n').filter(function(line) {
+          return line.trim() !== '';
+        });
+        lineCount.textContent = lines.length;
+      }
+      
+      // =====================================================
+      // ANALYZE BUTTON: Main Action
+      // =====================================================
+      analyzeBtn.addEventListener('click', function() {
+        // --- Step 1: Get raw text ---
+        var rawText = dataInput.value;
+        
+        // --- Step 2: Parse into numbers ---
+        var numbers = rawText
+          .split('\n')                    // Split by line breaks
+          .map(function(line) { 
+            return line.trim();           // Remove extra spaces
+          })
+          .filter(function(line) { 
+            return line !== '';           // Remove empty lines
+          })
+          .map(function(line) {
+            return parseFloat(line);      // Convert text to number
+          })
+          .filter(function(num) {
+            return !isNaN(num);           // Remove anything not a number
+          });
+        
+        // --- Step 3: Validate ---
+        if (numbers.length === 0) {
+          showResult('❌ Please enter at least one valid number.\n\n💡 Tip: Put each number on its own line.', 'error');
+          return;
+        }
+        
+        // --- Step 4: Show loading ---
+        loading.style.display = 'flex';
+        resultDiv.style.display = 'none';
+        analyzeBtn.disabled = true;
+        analyzeBtn.textContent = '⏳ Processing...';
+        
+        // --- Step 5: Send to backend ---
+        google.script.run
+          .withSuccessHandler(onAnalyzeSuccess)
+          .withFailureHandler(onAnalyzeFailure)
+          .analyzeSalesWebApp(numbers);
+      });
+      
+      // =====================================================
+      // SUCCESS HANDLER
+      // =====================================================
+      function onAnalyzeSuccess(result) {
+        // Hide loading
+        loading.style.display = 'none';
+        analyzeBtn.disabled = false;
+        analyzeBtn.textContent = '🔍 Analyze Sales';
+        
+        // Format the result
+        var output = '';
+        output += '📈  ANALYSIS RESULTS\n';
+        output += '━'.repeat(42) + '\n\n';
+        
+        output += '📊 Total Sales        : $' + formatNumber(result.total) + '\n';
+        output += '📈 Average Sale       : $' + formatNumber(result.average) + '\n';
+        output += '📉 Standard Deviation : $' + formatNumber(result.stdDev) + '\n';
+        output += '📋 Number of Entries  : ' + result.count + '\n';
+        output += '━'.repeat(42) + '\n\n';
+        
+        if (result.outliers && result.outliers.length > 0) {
+          output += '⚠️  FLAGGED OUTLIERS:\n';
+          output += '   Values: ' + result.outliers.join(', ') + '\n';
+          output += '   💡 These values are more than 2 standard deviations\n';
+          output += '      from the mean. This may indicate:\n';
+          output += '      • Data entry errors\n';
+          output += '      • Unusual business activity\n';
+          output += '      • Seasonal spikes or drops\n';
+        } else {
+          output += '✅ No outliers detected.\n';
+          output += '   All values are within the normal range\n';
+          output += '   (within 2 standard deviations of the mean).\n';
+        }
+        
+        showResult(output, 'success');
+      }
+      
+      // =====================================================
+      // FAILURE HANDLER
+      // =====================================================
+      function onAnalyzeFailure(error) {
+        loading.style.display = 'none';
+        analyzeBtn.disabled = false;
+        analyzeBtn.textContent = '🔍 Analyze Sales';
+        
+        var message = '❌ ERROR: ' + error.message;
+        showResult(message, 'error');
+      }
+      
+      // =====================================================
+      // HELPER: Show Result
+      // =====================================================
+      function showResult(message, type) {
+        resultDiv.textContent = message;
+        resultDiv.style.display = 'block';
+        resultDiv.className = type || '';
+      }
+      
+      // =====================================================
+      // HELPER: Format Number
+      // =====================================================
+      function formatNumber(num) {
+        if (typeof num !== 'number') return num;
+        return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      }
+      
+      // =====================================================
+      // CLEAR BUTTON
+      // =====================================================
+      clearBtn.addEventListener('click', function() {
+        dataInput.value = '';
+        resultDiv.style.display = 'none';
+        resultDiv.className = '';
+        loading.style.display = 'none';
+        analyzeBtn.disabled = false;
+        analyzeBtn.textContent = '🔍 Analyze Sales';
+        updateLineCount();
+        dataInput.focus();
+      });
+      
+      // =====================================================
+      // SAMPLE DATA BUTTON
+      // =====================================================
+      sampleBtn.addEventListener('click', function() {
+        dataInput.value = SAMPLE_DATA.join('\n');
+        resultDiv.style.display = 'none';
+        resultDiv.className = '';
+        loading.style.display = 'none';
+        analyzeBtn.disabled = false;
+        analyzeBtn.textContent = '🔍 Analyze Sales';
+        updateLineCount();
+        dataInput.focus();
+        // Scroll to textarea
+        dataInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      
+      // =====================================================
+      // KEYBOARD SHORTCUT: Ctrl+Enter to analyze
+      // =====================================================
+      dataInput.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          analyzeBtn.click();
+        }
+      });
+      
+      // =====================================================
+      // AUTO-FOCUS and initial line count on page load
+      // =====================================================
+      document.addEventListener('DOMContentLoaded', function() {
+        dataInput.focus();
+        updateLineCount();
+      });
+      
+      // =====================================================
+      // END OF JAVASCRIPT
+      // =====================================================
+    </script>
+  </body>
+</html>
