@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!--
+      =====================================================
+      FROM SPREADSHEET TO WEB APP - CHAPTER 8
+      Customer Satisfaction Analyzer
+      
+      This web app analyzes customer satisfaction data
+      using statistical methods.
+      =====================================================
+    -->
+    <style>
+      /* ===== Base Reset ===== */
+      * {
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        background: #f4f7fc;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1a2a3a;
+        line-height: 1.6;
+        min-height: 100vh;
+      }
+      
+      .container {
+        max-width: 1200px;
+        width: 100%;
+        margin: 0 auto;
+        background: #ffffff;
+        padding: 35px 40px;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      }
+      
+      h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin-top: 0;
+        margin-bottom: 4px;
+        color: #0b1a2b;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      h1 .emoji {
+        font-size: 32px;
+      }
+      
+      .subtitle {
+        color: #5e6f8d;
+        font-size: 16px;
+        margin-bottom: 24px;
+        border-bottom: 2px solid #eef2f7;
+        padding-bottom: 16px;
+      }
+      
+      /* ===== Stats Grid ===== */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      
+      .stat-card {
+        background: #f8faff;
+        border: 1px solid #e6edf5;
+        border-radius: 10px;
+        padding: 12px 16px;
+        text-align: center;
+      }
+      
+      .stat-card .label {
+        font-size: 11px;
+        color: #5e6f8d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+      }
+      
+      .stat-card .value {
+        font-size: 22px;
+        font-weight: 600;
+        color: #0b1a2b;
+        margin-top: 2px;
+      }
+      
+      .stat-card .value.good {
+        color: #34a853;
+      }
+      
+      .stat-card .value.warning {
+        color: #f5a623;
+      }
+      
+      .stat-card .value.danger {
+        color: #d93025;
+      }
+      
+      /* ===== Section ===== */
+      .section {
+        margin: 24px 0;
+        padding: 20px;
+        background: #f8faff;
+        border-radius: 10px;
+        border: 1px solid #eef2f7;
+      }
+      
+      .section h3 {
+        margin-top: 0;
+        margin-bottom: 12px;
+        color: #0b1a2b;
+      }
+      
+      /* ===== Distribution Bar ===== */
+      .distribution-bar {
+        display: flex;
+        height: 30px;
+        border-radius: 6px;
+        overflow: hidden;
+        margin: 8px 0;
+      }
+      
+      .distribution-bar .segment {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 500;
+        color: white;
+        transition: width 0.5s ease;
+      }
+      
+      .segment.excellent { background: #34a853; }
+      .segment.good { background: #1a73e8; }
+      .segment.average { background: #f5a623; }
+      .segment.poor { background: #ea4335; }
+      .segment.terrible { background: #d93025; }
+      
+      /* ===== Two Column Layout ===== */
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      
+      .two-col .stat-card {
+        text-align: left;
+      }
+      
+      /* ===== Comments ===== */
+      .comment-list {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      
+      .comment-item {
+        padding: 8px 12px;
+        border-bottom: 1px solid #eef2f7;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .comment-item .score {
+        font-weight: 600;
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 14px;
+      }
+      
+      .comment-item .score.high {
+        background: #e6f4ea;
+        color: #1e7e34;
+      }
+      
+      .comment-item .score.low {
+        background: #fce8e6;
+        color: #c5221f;
+      }
+      
+      .comment-item .text {
+        flex: 1;
+        margin: 0 12px;
+        font-size: 14px;
+      }
+      
+      .comment-item .customer {
+        font-size: 12px;
+        color: #8a9bb5;
+      }
+      
+      /* ===== Buttons ===== */
+      .btn-primary {
+        background: #1a73e8;
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .btn-primary:hover {
+        background: #1557b0;
+      }
+      
+      .btn-secondary {
+        background: #eef2f7;
+        color: #1a2a3a;
+        border: none;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .btn-secondary:hover {
+        background: #dce3ed;
+      }
+      
+      .controls {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin: 16px 0 20px 0;
+      }
+      
+      /* ===== Loading ===== */
+      #loading {
+        display: none;
+        padding: 20px;
+        text-align: center;
+        color: #5e6f8d;
+      }
+      
+      #loading .spinner {
+        display: inline-block;
+        animation: spin 1s linear infinite;
+        font-size: 24px;
+        margin-bottom: 8px;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* ===== Error ===== */
+      #error {
+        display: none;
+        padding: 16px 20px;
+        background: #fff5f5;
+        border-radius: 10px;
+        border-left: 4px solid #d93025;
+        color: #a12b2b;
+        margin-bottom: 16px;
+      }
+      
+      /* ===== Footer ===== */
+      .footer {
+        margin-top: 28px;
+        font-size: 13px;
+        color: #8a9bb5;
+        text-align: center;
+        border-top: 1px solid #eef2f7;
+        padding-top: 18px;
+      }
+      
+      .footer .book-link {
+        font-weight: 500;
+        color: #1a2a3a;
+      }
+      
+      /* ===== Responsive ===== */
+      @media (max-width: 768px) {
+        body {
+          padding: 16px;
+        }
+        .container {
+          padding: 20px 16px;
+          border-radius: 12px;
+        }
+        h1 {
+          font-size: 22px;
+        }
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .stat-card .value {
+          font-size: 18px;
+        }
+        .distribution-bar {
+          height: 24px;
+          font-size: 10px;
+        }
+      }
+      
+      @media (max-width: 400px) {
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+        .comment-item {
+          flex-wrap: wrap;
+        }
+        .comment-item .text {
+          width: 100%;
+          margin: 4px 0;
+        }
+      }
+    </style>
+  </head>
+  
+  <body>
+    <div class="container">
+      <!-- ===== HEADER ===== -->
+      <h1>
+        <span class="emoji">📊</span> Customer Satisfaction Analyzer
+      </h1>
+      <div class="subtitle">
+        Uncover insights hidden in your customer feedback using statistical analysis.
+      </div>
+      
+      <!-- ===== CONTROLS ===== -->
+      <div class="controls">
+        <button class="btn-primary" id="refreshBtn">🔄 Analyze Data</button>
+        <button class="btn-secondary" id="addSampleBtn">📥 Add Sample Data</button>
+      </div>
+      
+      <!-- ===== ERROR ===== -->
+      <div id="error"></div>
+      
+      <!-- ===== LOADING ===== -->
+      <div id="loading">
+        <div class="spinner">⏳</div>
+        <div>Analyzing data... Please wait.</div>
+      </div>
+      
+      <!-- ===== RESULTS ===== -->
+      <div id="results" style="display: none;">
+        <!-- ===== Stats Grid ===== -->
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card">
+            <div class="label">Responses</div>
+            <div class="value" id="responseCount">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Mean Score</div>
+            <div class="value" id="meanScore">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Median Score</div>
+            <div class="value" id="medianScore">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Std Deviation</div>
+            <div class="value" id="stdDevScore">—</div>
+          </div>
+        </div>
+        
+        <!-- ===== Distribution ===== -->
+        <div class="section">
+          <h3>📊 Score Distribution</h3>
+          <div class="distribution-bar" id="distributionBar"></div>
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #5e6f8d; margin-top: 4px;">
+            <span>1 (Terrible)</span>
+            <span>3 (Average)</span>
+            <span>5 (Excellent)</span>
+          </div>
+          <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px;" id="categoryLabels"></div>
+        </div>
+        
+        <!-- ===== Two Column ===== -->
+        <div class="two-col">
+          <!-- Central Tendency -->
+          <div class="section">
+            <h3>📈 Central Tendency</h3>
+            <div class="stat-card" style="border: none; padding: 4px 0;">
+              <div class="label">Mean</div>
+              <div class="value" id="meanDetail" style="font-size: 18px;">—</div>
+            </div>
+            <div class="stat-card" style="border: none; padding: 4px 0;">
+              <div class="label">Median</div>
+              <div class="value" id="medianDetail" style="font-size: 18px;">—</div>
+            </div>
+            <div class="stat-card" style="border: none; padding: 4px 0;">
+              <div class="label">Mode</div>
+              <div class="value" id="modeDetail" style="font-size: 18px;">—</div>
+            </div>
+          </div>
+          
+          <!-- Dispersion -->
+          <div class="section">
+            <h3>📉 Dispersion</h3>
+            <div class="stat-card" style="border: none; padding: 4px 0;">
+              <div class="label">Standard Deviation</div>
+              <div class="value" id="stdDevDetail" style="font-size: 18px;">—</div>
+            </div>
+            <div class="stat-card" style="border: none; padding: 4px 0;">
+              <div class="label">Range</div>
+              <div class="value" id="rangeDetail" style="font-size: 18px;">—</div>
+            </div>
+            <div class="stat-card" style="border: none; padding: 4px 0;">
+              <div class="label">Variance</div>
+              <div class="value" id="varianceDetail" style="font-size: 18px;">—</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- ===== Confidence Interval ===== -->
+        <div class="section">
+          <h3>🎯 Confidence Interval (95%)</h3>
+          <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <div>
+              <span style="color: #5e6f8d; font-size: 14px;">Lower Bound</span>
+              <div style="font-size: 24px; font-weight: 600; color: #0b1a2b;" id="ciLower">—</div>
+            </div>
+            <div>
+              <span style="color: #5e6f8d; font-size: 14px;">Upper Bound</span>
+              <div style="font-size: 24px; font-weight: 600; color: #0b1a2b;" id="ciUpper">—</div>
+            </div>
+            <div>
+              <span style="color: #5e6f8d; font-size: 14px;">Margin of Error</span>
+              <div style="font-size: 24px; font-weight: 600; color: #0b1a2b;" id="ciMargin">—</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- ===== Percentiles ===== -->
+        <div class="section">
+          <h3>📊 Percentiles</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px;">
+            <div><span style="color: #5e6f8d; font-size: 13px;">25th</span><div style="font-size: 20px; font-weight: 600;" id="p25">—</div></div>
+            <div><span style="color: #5e6f8d; font-size: 13px;">50th (Median)</span><div style="font-size: 20px; font-weight: 600;" id="p50">—</div></div>
+            <div><span style="color: #5e6f8d; font-size: 13px;">75th</span><div style="font-size: 20px; font-weight: 600;" id="p75">—</div></div>
+            <div><span style="color: #5e6f8d; font-size: 13px;">90th</span><div style="font-size: 20px; font-weight: 600;" id="p90">—</div></div>
+            <div><span style="color: #5e6f8d; font-size: 13px;">95th</span><div style="font-size: 20px; font-weight: 600;" id="p95">—</div></div>
+          </div>
+        </div>
+        
+        <!-- ===== Outliers ===== -->
+        <div class="section" id="outliersSection">
+          <h3>⚠️ Outlier Analysis</h3>
+          <div id="outlierContent"></div>
+        </div>
+        
+        <!-- ===== Comments ===== -->
+        <div class="section">
+          <h3>💬 Top & Bottom Comments</h3>
+          <div class="two-col">
+            <div>
+              <h4 style="margin: 0 0 8px 0; color: #34a853;">🌟 Top Comments</h4>
+              <div class="comment-list" id="topComments"></div>
+            </div>
+            <div>
+              <h4 style="margin: 0 0 8px 0; color: #d93025;">⚠️ Bottom Comments</h4>
+              <div class="comment-list" id="bottomComments"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ===== FOOTER ===== -->
+      <div class="footer">
+        Built with ❤️ using Google Apps Script
+        <br>
+        📖 From <strong class="book-link">From Spreadsheet to Web App</strong>
+      </div>
+    </div>
+    
+    <!-- ===================================================== -->
+    <!-- JAVASCRIPT: Frontend Logic -->
+    <!-- ===================================================== -->
+    <script>
+      // =====================================================
+      // DOM REFERENCES
+      // =====================================================
+      var refreshBtn = document.getElementById('refreshBtn');
+      var addSampleBtn = document.getElementById('addSampleBtn');
+      var loading = document.getElementById('loading');
+      var errorDiv = document.getElementById('error');
+      var results = document.getElementById('results');
+      
+      // Stats
+      var responseCount = document.getElementById('responseCount');
+      var meanScore = document.getElementById('meanScore');
+      var medianScore = document.getElementById('medianScore');
+      var stdDevScore = document.getElementById('stdDevScore');
+      
+      // Details
+      var meanDetail = document.getElementById('meanDetail');
+      var medianDetail = document.getElementById('medianDetail');
+      var modeDetail = document.getElementById('modeDetail');
+      var stdDevDetail = document.getElementById('stdDevDetail');
+      var rangeDetail = document.getElementById('rangeDetail');
+      var varianceDetail = document.getElementById('varianceDetail');
+      
+      // CI
+      var ciLower = document.getElementById('ciLower');
+      var ciUpper = document.getElementById('ciUpper');
+      var ciMargin = document.getElementById('ciMargin');
+      
+      // Percentiles
+      var p25 = document.getElementById('p25');
+      var p50 = document.getElementById('p50');
+      var p75 = document.getElementById('p75');
+      var p90 = document.getElementById('p90');
+      var p95 = document.getElementById('p95');
+      
+      // Distribution
+      var distributionBar = document.getElementById('distributionBar');
+      var categoryLabels = document.getElementById('categoryLabels');
+      
+      // Outliers
+      var outlierContent = document.getElementById('outlierContent');
+      
+      // Comments
+      var topComments = document.getElementById('topComments');
+      var bottomComments = document.getElementById('bottomComments');
+      
+      // =====================================================
+      // LOAD ANALYSIS
+      // =====================================================
+      function loadAnalysis() {
+        showLoading();
+        hideError();
+        results.style.display = 'none';
+        
+        google.script.run
+          .withSuccessHandler(function(response) {
+            hideLoading();
+            if (!response.success) {
+              showError('❌ ' + response.error);
+              return;
+            }
+            displayAnalysis(response);
+            results.style.display = 'block';
+          })
+          .withFailureHandler(function(error) {
+            hideLoading();
+            showError('❌ Error: ' + error.message);
+          })
+          .getAnalysisWebApp();
+      }
+      
+      function displayAnalysis(data) {
+        // ===== Stats =====
+        responseCount.textContent = data.count;
+        meanScore.textContent = data.centralTendency.meanRounded;
+        medianScore.textContent = data.centralTendency.medianRounded;
+        stdDevScore.textContent = data.dispersion.stdDevRounded;
+        
+        // Color coding for mean
+        var meanVal = data.centralTendency.mean;
+        meanScore.className = 'value ' + (meanVal >= 4 ? 'good' : meanVal >= 3 ? 'warning' : 'danger');
+        
+        // ===== Central Tendency =====
+        meanDetail.textContent = data.centralTendency.meanRounded;
+        medianDetail.textContent = data.centralTendency.medianRounded;
+        modeDetail.textContent = data.centralTendency.modes.length > 1 ? 
+          data.centralTendency.modes.join(', ') : 
+          data.centralTendency.modes[0] || 'N/A';
+        
+        // ===== Dispersion =====
+        stdDevDetail.textContent = data.dispersion.stdDevRounded;
+        rangeDetail.textContent = data.dispersion.range;
+        varianceDetail.textContent = data.dispersion.varianceRounded;
+        
+        // ===== Confidence Interval =====
+        ciLower.textContent = data.confidenceInterval.lowerRounded;
+        ciUpper.textContent = data.confidenceInterval.upperRounded;
+        ciMargin.textContent = data.confidenceInterval.marginOfError.toFixed(2);
+        
+        // ===== Percentiles =====
+        p25.textContent = data.percentiles.p25 || 'N/A';
+        p50.textContent = data.percentiles.p50 || 'N/A';
+        p75.textContent = data.percentiles.p75 || 'N/A';
+        p90.textContent = data.percentiles.p90 || 'N/A';
+        p95.textContent = data.percentiles.p95 || 'N/A';
+        
+        // ===== Distribution Bar =====
+        var categories = data.categories;
+        var total = data.count;
+        
+        var excellentPct = parseFloat(categories.excellentPercent);
+        var goodPct = parseFloat(categories.goodPercent);
+        var averagePct = parseFloat(categories.averagePercent);
+        var poorPct = parseFloat(categories.poorPercent);
+        var terriblePct = parseFloat(categories.terriblePercent);
+        
+        distributionBar.innerHTML = '';
+        
+        var segments = [
+          { pct: terriblePct, cls: 'terrible', label: '1-2' },
+          { pct: poorPct, cls: 'poor', label: '2-3' },
+          { pct: averagePct, cls: 'average', label: '3-4' },
+          { pct: goodPct, cls: 'good', label: '4-4.5' },
+          { pct: excellentPct, cls: 'excellent', label: '4.5-5' }
+        ];
+        
+        segments.forEach(function(seg) {
+          if (seg.pct > 0) {
+            var div = document.createElement('div');
+            div.className = 'segment ' + seg.cls;
+            div.style.width = seg.pct + '%';
+            div.textContent = seg.pct >= 5 ? Math.round(seg.pct) + '%' : '';
+            distributionBar.appendChild(div);
+          }
+        });
+        
+        // Category labels
+        categoryLabels.innerHTML = '';
+        var labelData = [
+          { label: '🌟 Excellent (4.5-5)', count: categories.excellent, pct: categories.excellentPercent, cls: 'excellent' },
+          { label: '✅ Good (3.5-4.5)', count: categories.good, pct: categories.goodPercent, cls: 'good' },
+          { label: '📊 Average (2.5-3.5)', count: categories.average, pct: categories.averagePercent, cls: 'average' },
+          { label: '⚠️ Poor (1.5-2.5)', count: categories.poor, pct: categories.poorPercent, cls: 'poor' },
+          { label: '❌ Terrible (1-1.5)', count: categories.terrible, pct: categories.terriblePercent, cls: 'terrible' }
+        ];
+        
+        labelData.forEach(function(item) {
+          var span = document.createElement('span');
+          span.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:' + 
+            (item.cls === 'excellent' ? '#34a853' : 
+             item.cls === 'good' ? '#1a73e8' : 
+             item.cls === 'average' ? '#f5a623' : 
+             item.cls === 'poor' ? '#ea4335' : '#d93025') + 
+            ';vertical-align:middle;margin-right:4px;"></span> ' +
+            item.label + ': ' + item.count + ' (' + item.pct + '%)';
+          categoryLabels.appendChild(span);
+        });
+        
+        // ===== Outliers =====
+        var outlierHtml = '';
+        if (data.outliers.count > 0) {
+          outlierHtml += '<p>⚠️ Found <strong>' + data.outliers.count + '</strong> outlier(s) (' + 
+                         data.outliers.percentage.toFixed(1) + '% of data).</p>';
+          outlierHtml += '<p style="font-size:14px;color:#5e6f8d;">Values: ' + data.outliers.outliers.join(', ') + '</p>';
+          outlierHtml += '<p style="font-size:13px;color:#5e6f8d;">💡 These values are more than 2 standard deviations from the mean.</p>';
+        } else {
+          outlierHtml += '<p>✅ No outliers detected. All values are within 2 standard deviations of the mean.</p>';
+        }
+        outlierContent.innerHTML = outlierHtml;
+        
+        // ===== Load Comments =====
+        loadComments();
+      }
+      
+      // =====================================================
+      // LOAD COMMENTS
+      // =====================================================
+      function loadComments() {
+        google.script.run
+          .withSuccessHandler(function(data) {
+            // Top comments
+            var topHtml = '';
+            data.top.forEach(function(item) {
+              topHtml += '<div class="comment-item">';
+              topHtml += '<span class="score high">' + item.score + '</span>';
+              topHtml += '<span class="text">' + escapeHtml(item.comment || 'No comment') + '</span>';
+              topHtml += '<span class="customer">' + escapeHtml(item.customerId || '') + '</span>';
+              topHtml += '</div>';
+            });
+            if (data.top.length === 0) {
+              topHtml = '<p style="color: #8a9bb5; text-align: center;">No comments available.</p>';
+            }
+            topComments.innerHTML = topHtml;
+            
+            // Bottom comments
+            var bottomHtml = '';
+            data.bottom.forEach(function(item) {
+              bottomHtml += '<div class="comment-item">';
+              bottomHtml += '<span class="score low">' + item.score + '</span>';
+              bottomHtml += '<span class="text">' + escapeHtml(item.comment || 'No comment') + '</span>';
+              bottomHtml += '<span class="customer">' + escapeHtml(item.customerId || '') + '</span>';
+              bottomHtml += '</div>';
+            });
+            if (data.bottom.length === 0) {
+              bottomHtml = '<p style="color: #8a9bb5; text-align: center;">No comments available.</p>';
+            }
+            bottomComments.innerHTML = bottomHtml;
+          })
+          .withFailureHandler(function() {
+            topComments.innerHTML = '<p style="color: #8a9bb5; text-align: center;">Could not load comments.</p>';
+            bottomComments.innerHTML = '<p style="color: #8a9bb5; text-align: center;">Could not load comments.</p>';
+          })
+          .getTopCommentsWebApp(5);
+      }
+      
+      // =====================================================
+      // ADD SAMPLE DATA
+      // =====================================================
+      function addSampleData() {
+        if (!confirm('⚠️ This will add sample satisfaction data to your sheet.\n\nContinue?')) {
+          return;
+        }
+        
+        showLoading();
+        hideError();
+        
+        google.script.run
+          .withSuccessHandler(function() {
+            hideLoading();
+            loadAnalysis();
+          })
+          .withFailureHandler(function(error) {
+            hideLoading();
+            showError('❌ Error: ' + error.message);
+          })
+          .addSampleSatisfactionData();
+      }
+      
+      // =====================================================
+      // HELPER FUNCTIONS
+      // =====================================================
+      function escapeHtml(text) {
+        if (!text) return '';
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+      
+      function showError(message) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+      }
+      
+      function hideError() {
+        errorDiv.style.display = 'none';
+      }
+      
+      function showLoading() {
+        loading.style.display = 'block';
+      }
+      
+      function hideLoading() {
+        loading.style.display = 'none';
+      }
+      
+      // =====================================================
+      // EVENT LISTENERS
+      // =====================================================
+      refreshBtn.addEventListener('click', loadAnalysis);
+      addSampleBtn.addEventListener('click', addSampleData);
+      
+      // =====================================================
+      // KEYBOARD SHORTCUTS
+      // =====================================================
+      document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+          e.preventDefault();
+          refreshBtn.click();
+        }
+      });
+      
+      // =====================================================
+      // INITIAL LOAD
+      // =====================================================
+      document.addEventListener('DOMContentLoaded', function() {
+        loadAnalysis();
+        
+        console.log('📊 Keyboard shortcuts:');
+        console.log('  Ctrl+R = Analyze data');
+      });
+      
+      // =====================================================
+      // END OF JAVASCRIPT
+      // =====================================================
+    </script>
+  </body>
+</html>
