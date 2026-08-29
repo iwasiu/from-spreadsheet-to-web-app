@@ -1,20 +1,27 @@
-# Templates Folder
+# From Spreadsheet to Web App
 
-This folder contains blank templates and starter files for readers.
+## *A Practical Guide to Automating Your Business with Google Apps Script*
 
-## 📁 Contents
-
-| File | Purpose |
-|------|---------|
-| `google-sheet-template.xlsx` | Pre-filled Google Sheet with sample data (coming soon) |
-| `apps-script-starter.gs` | Blank Apps Script template |
-
-## 🔧 How to Use
-
-1. Download the template you need
-2. Open it in the appropriate application
-3. Follow the instructions in the book
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-*Part of the [From Spreadsheet to Web App](https://github.com/iwasiu/from-spreadsheet-to-web-app) book repository.*
+## 📖 About This Book
+
+**From Spreadsheet to Web App** is your practical guide to escaping spreadsheet hell and building real, shareable web applications—using the mathematics you already know.
+
+Written for:
+- **Small business owners** who want to automate repetitive tasks
+- **Corporate analysts** who are tired of manual data processing
+- **Anyone** who has ever said "I'm not a math person" but secretly knows they can do this
+
+**What You'll Build:**
+- Custom spreadsheet functions
+- Interactive web applications
+- Automated dashboards
+- PDF report generators
+- And more—all using Google Apps Script
+
+---
+
+## 📁 Repository Structure
