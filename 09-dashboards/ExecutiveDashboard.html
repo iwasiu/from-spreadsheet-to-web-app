@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!--
+      =====================================================
+      FROM SPREADSHEET TO WEB APP - CHAPTER 9
+      Executive Dashboard
+      
+      This web app creates a dynamic dashboard with
+      Google Charts visualization.
+      =====================================================
+    -->
+    <style>
+      /* ===== Base Reset ===== */
+      * {
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        background: #f4f7fc;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1a2a3a;
+        line-height: 1.6;
+        min-height: 100vh;
+      }
+      
+      .container {
+        max-width: 1300px;
+        width: 100%;
+        margin: 0 auto;
+      }
+      
+      /* ===== Header ===== */
+      .dashboard-header {
+        background: #ffffff;
+        padding: 30px 40px;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+      }
+      
+      .dashboard-header h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0 0 4px 0;
+        color: #0b1a2b;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      .dashboard-header .subtitle {
+        color: #5e6f8d;
+        font-size: 16px;
+        margin: 0;
+      }
+      
+      .dashboard-header .last-updated {
+        font-size: 12px;
+        color: #8a9bb5;
+        margin-top: 8px;
+      }
+      
+      /* ===== Controls ===== */
+      .controls {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 12px 0 0 0;
+        padding-top: 16px;
+        border-top: 1px solid #eef2f7;
+      }
+      
+      .controls label {
+        font-weight: 500;
+        font-size: 14px;
+        color: #1a2a3a;
+      }
+      
+      .controls select {
+        padding: 8px 16px;
+        border: 2px solid #dce3ed;
+        border-radius: 8px;
+        font-size: 14px;
+        background: white;
+        color: #1a2a3a;
+        cursor: pointer;
+        min-width: 120px;
+        transition: border-color 0.2s;
+      }
+      
+      .controls select:focus {
+        border-color: #1a73e8;
+        outline: none;
+      }
+      
+      .controls .btn-primary {
+        background: #1a73e8;
+        color: white;
+        border: none;
+        padding: 8px 20px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      
+      .controls .btn-primary:hover {
+        background: #1557b0;
+      }
+      
+      .controls .btn-secondary {
+        background: #eef2f7;
+        color: #1a2a3a;
+        border: none;
+        padding: 8px 20px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      
+      .controls .btn-secondary:hover {
+        background: #dce3ed;
+      }
+      
+      /* ===== KPI Cards ===== */
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      
+      .kpi-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 18px 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        text-align: center;
+      }
+      
+      .kpi-card .label {
+        font-size: 12px;
+        color: #5e6f8d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+      }
+      
+      .kpi-card .value {
+        font-size: 24px;
+        font-weight: 600;
+        color: #0b1a2b;
+        margin-top: 4px;
+      }
+      
+      .kpi-card .value .currency {
+        font-size: 16px;
+        font-weight: 400;
+        color: #5e6f8d;
+      }
+      
+      .kpi-card .value.good {
+        color: #34a853;
+      }
+      
+      .kpi-card .value.warning {
+        color: #f5a623;
+      }
+      
+      .kpi-card .value.danger {
+        color: #d93025;
+      }
+      
+      .kpi-card .trend {
+        font-size: 12px;
+        margin-top: 4px;
+      }
+      
+      .kpi-card .trend.up {
+        color: #34a853;
+      }
+      
+      .kpi-card .trend.down {
+        color: #d93025;
+      }
+      
+      /* ===== Charts Grid ===== */
+      .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+      
+      .chart-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      }
+      
+      .chart-card h3 {
+        margin: 0 0 12px 0;
+        font-size: 16px;
+        color: #0b1a2b;
+        font-weight: 600;
+      }
+      
+      .chart-container {
+        width: 100%;
+        height: 300px;
+      }
+      
+      .chart-container.full {
+        height: 350px;
+      }
+      
+      .chart-container.pie {
+        height: 280px;
+      }
+      
+      /* ===== Footer ===== */
+      .footer {
+        margin-top: 28px;
+        font-size: 13px;
+        color: #8a9bb5;
+        text-align: center;
+        padding-top: 18px;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      }
+      
+      .footer .book-link {
+        font-weight: 500;
+        color: #1a2a3a;
+      }
+      
+      /* ===== Loading ===== */
+      #loading {
+        display: none;
+        padding: 40px;
+        text-align: center;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        margin-bottom: 24px;
+      }
+      
+      #loading .spinner {
+        display: inline-block;
+        animation: spin 1s linear infinite;
+        font-size: 32px;
+        margin-bottom: 8px;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      #loading .text {
+        color: #5e6f8d;
+        font-size: 16px;
+      }
+      
+      /* ===== Error ===== */
+      #error {
+        display: none;
+        padding: 16px 20px;
+        background: #fff5f5;
+        border-radius: 12px;
+        border-left: 4px solid #d93025;
+        color: #a12b2b;
+        margin-bottom: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      }
+      
+      /* ===== No Data ===== */
+      #noData {
+        display: none;
+        padding: 40px;
+        text-align: center;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        color: #5e6f8d;
+      }
+      
+      #noData .icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+      }
+      
+      /* ===== Responsive ===== */
+      @media (max-width: 992px) {
+        .charts-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      
+      @media (max-width: 768px) {
+        body {
+          padding: 16px;
+        }
+        .dashboard-header {
+          padding: 20px 16px;
+        }
+        .dashboard-header h1 {
+          font-size: 22px;
+        }
+        .kpi-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+        .kpi-card .value {
+          font-size: 20px;
+        }
+        .controls {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .controls select {
+          width: 100%;
+        }
+        .chart-container {
+          height: 240px;
+        }
+        .chart-container.pie {
+          height: 220px;
+        }
+      }
+      
+      @media (max-width: 400px) {
+        .kpi-grid {
+          grid-template-columns: 1fr;
+        }
+        .dashboard-header h1 {
+          font-size: 19px;
+        }
+        .chart-container {
+          height: 200px;
+        }
+      }
+    </style>
+  </head>
+  
+  <body>
+    <div class="container">
+      <!-- ===== HEADER ===== -->
+      <div class="dashboard-header">
+        <h1>
+          <span>📊</span> Executive Dashboard
+        </h1>
+        <div class="subtitle">Real-time business performance at a glance</div>
+        <div class="last-updated" id="lastUpdated">Loading data...</div>
+        
+        <!-- ===== CONTROLS ===== -->
+        <div class="controls">
+          <label for="regionFilter">Region:</label>
+          <select id="regionFilter">
+            <option value="All">All Regions</option>
+          </select>
+          
+          <label for="productFilter">Product:</label>
+          <select id="productFilter">
+            <option value="All">All Products</option>
+          </select>
+          
+          <button class="btn-primary" id="refreshBtn">🔄 Refresh</button>
+          <button class="btn-secondary" id="resetBtn">↺ Reset Filters</button>
+          <button class="btn-secondary" id="addSampleBtn">📥 Add Sample Data</button>
+        </div>
+      </div>
+      
+      <!-- ===== LOADING ===== -->
+      <div id="loading">
+        <div class="spinner">⏳</div>
+        <div class="text">Loading dashboard data...</div>
+      </div>
+      
+      <!-- ===== ERROR ===== -->
+      <div id="error"></div>
+      
+      <!-- ===== NO DATA ===== -->
+      <div id="noData">
+        <div class="icon">📊</div>
+        <div style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">No Data Available</div>
+        <div>Click "Add Sample Data" to populate the dashboard with sample sales data.</div>
+      </div>
+      
+      <!-- ===== DASHBOARD ===== -->
+      <div id="dashboard" style="display: none;">
+        <!-- ===== KPI Grid ===== -->
+        <div class="kpi-grid" id="kpiGrid">
+          <div class="kpi-card">
+            <div class="label">Total Sales</div>
+            <div class="value" id="kpiTotalSales">$0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="label">Average Sale</div>
+            <div class="value" id="kpiAverageSales">$0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="label">Month-over-Month</div>
+            <div class="value" id="kpiGrowth">0%</div>
+            <div class="trend" id="kpiGrowthTrend"></div>
+          </div>
+          <div class="kpi-card">
+            <div class="label">Total Transactions</div>
+            <div class="value" id="kpiCount">0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="label">Top Region</div>
+            <div class="value" id="kpiTopRegion" style="font-size: 18px;">—</div>
+          </div>
+          <div class="kpi-card">
+            <div class="label">Top Product</div>
+            <div class="value" id="kpiTopProduct" style="font-size: 18px;">—</div>
+          </div>
+        </div>
+        
+        <!-- ===== Charts ===== -->
+        <div class="charts-grid">
+          <!-- Chart 1: Sales Trend -->
+          <div class="chart-card">
+            <h3>📈 Sales Trend</h3>
+            <div class="chart-container" id="trendChart"></div>
+          </div>
+          
+          <!-- Chart 2: Sales by Region -->
+          <div class="chart-card">
+            <h3>🌍 Sales by Region</h3>
+            <div class="chart-container pie" id="regionChart"></div>
+          </div>
+          
+          <!-- Chart 3: Sales by Product -->
+          <div class="chart-card">
+            <h3>📦 Sales by Product</h3>
+            <div class="chart-container pie" id="productChart"></div>
+          </div>
+          
+          <!-- Chart 4: Sales by Rep -->
+          <div class="chart-card">
+            <h3>👤 Sales by Representative</h3>
+            <div class="chart-container" id="repChart"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ===== FOOTER ===== -->
+      <div class="footer">
+        Built with ❤️ using Google Apps Script &amp; Google Charts
+        <br>
+        📖 From <strong class="book-link">From Spreadsheet to Web App</strong>
+      </div>
+    </div>
+    
+    <!-- ===================================================== -->
+    <!-- JAVASCRIPT: Frontend Logic -->
+    <!-- ===================================================== -->
+    <script>
+      // =====================================================
+      // DOM REFERENCES
+      // =====================================================
+      var regionFilter = document.getElementById('regionFilter');
+      var productFilter = document.getElementById('productFilter');
+      var refreshBtn = document.getElementById('refreshBtn');
+      var resetBtn = document.getElementById('resetBtn');
+      var addSampleBtn = document.getElementById('addSampleBtn');
+      var loading = document.getElementById('loading');
+      var errorDiv = document.getElementById('error');
+      var noData = document.getElementById('noData');
+      var dashboard = document.getElementById('dashboard');
+      var lastUpdated = document.getElementById('lastUpdated');
+      
+      // KPIs
+      var kpiTotalSales = document.getElementById('kpiTotalSales');
+      var kpiAverageSales = document.getElementById('kpiAverageSales');
+      var kpiGrowth = document.getElementById('kpiGrowth');
+      var kpiGrowthTrend = document.getElementById('kpiGrowthTrend');
+      var kpiCount = document.getElementById('kpiCount');
+      var kpiTopRegion = document.getElementById('kpiTopRegion');
+      var kpiTopProduct = document.getElementById('kpiTopProduct');
+      
+      // Chart containers
+      var trendChart = document.getElementById('trendChart');
+      var regionChart = document.getElementById('regionChart');
+      var productChart = document.getElementById('productChart');
+      var repChart = document.getElementById('repChart');
+      
+      // =====================================================
+      // GOOGLE CHARTS LOADER
+      // =====================================================
+      google.charts.load('current', { packages: ['corechart'] });
+      
+      // =====================================================
+      // LOAD DASHBOARD
+      // =====================================================
+      function loadDashboard() {
+        showLoading();
+        hideError();
+        dashboard.style.display = 'none';
+        noData.style.display = 'none';
+        
+        var region = regionFilter.value;
+        var product = productFilter.value;
+        
+        google.script.run
+          .withSuccessHandler(function(response) {
+            hideLoading();
+            if (!response.success) {
+              showError('❌ ' + response.error);
+              return;
+            }
+            
+            // Check if we have data
+            if (!response.allData || !response.allData.salesData || response.allData.salesData.length === 0) {
+              noData.style.display = 'block';
+              dashboard.style.display = 'none';
+              return;
+            }
+            
+            displayDashboard(response);
+            dashboard.style.display = 'block';
+          })
+          .withFailureHandler(function(error) {
+            hideLoading();
+            showError('❌ Error: ' + error.message);
+          })
+          .getDashboardDataWebApp(region, product);
+      }
+      
+      function displayDashboard(data) {
+        // Update last updated time
+        var now = new Date();
+        lastUpdated.textContent = 'Last updated: ' + now.toLocaleString();
+        
+        // Determine which data to use (filtered or all)
+        var displayData = data.hasFilters && data.filteredData ? data.filteredData : data.allData;
+        var kpis = displayData.kpis;
+        
+        // ===== Update KPIs =====
+        kpiTotalSales.textContent = '$' + formatNumber(kpis.totalSales);
+        kpiAverageSales.textContent = '$' + formatNumber(kpis.averageSales);
+        kpiCount.textContent = kpis.count;
+        
+        // Month-over-month growth
+        var growth = kpis.monthOverMonthGrowth || 0;
+        kpiGrowth.textContent = (growth > 0 ? '+' : '') + growth.toFixed(1) + '%';
+        kpiGrowth.className = 'value ' + (growth > 0 ? 'good' : growth < 0 ? 'danger' : '');
+        
+        if (growth > 0) {
+          kpiGrowthTrend.textContent = '📈 Up from last month';
+          kpiGrowthTrend.className = 'trend up';
+        } else if (growth < 0) {
+          kpiGrowthTrend.textContent = '📉 Down from last month';
+          kpiGrowthTrend.className = 'trend down';
+        } else {
+          kpiGrowthTrend.textContent = '➡️ No change';
+          kpiGrowthTrend.className = 'trend';
+        }
+        
+        kpiTopRegion.textContent = kpis.topRegion || '—';
+        kpiTopProduct.textContent = kpis.topProduct || '—';
+        
+        // ===== Update Filters =====
+        var regions = data.filters.regions || [];
+        var products = data.filters.products || [];
+        
+        // Only update if we have new options
+        var currentRegion = regionFilter.value;
+        var currentProduct = productFilter.value;
+        
+        // Update region filter
+        regionFilter.innerHTML = '';
+        var allOption = document.createElement('option');
+        allOption.value = 'All';
+        allOption.textContent = 'All Regions';
+        regionFilter.appendChild(allOption);
+        
+        regions.forEach(function(region) {
+          var option = document.createElement('option');
+          option.value = region;
+          option.textContent = region;
+          regionFilter.appendChild(option);
+        });
+        
+        // Update product filter
+        productFilter.innerHTML = '';
+        var allOption2 = document.createElement('option');
+        allOption2.value = 'All';
+        allOption2.textContent = 'All Products';
+        productFilter.appendChild(allOption2);
+        
+        products.forEach(function(product) {
+          var option = document.createElement('option');
+          option.value = product;
+          option.textContent = product;
+          productFilter.appendChild(option);
+        });
+        
+        // Restore selected values if they exist
+        if (currentRegion && regions.includes(currentRegion)) {
+          regionFilter.value = currentRegion;
+        }
+        if (currentProduct && products.includes(currentProduct)) {
+          productFilter.value = currentProduct;
+        }
+        
+        // ===== Draw Charts =====
+        drawTrendChart(displayData.charts.monthly);
+        drawPieChart(regionChart, 'Sales by Region', displayData.charts.regions, 'region');
+        drawPieChart(productChart, 'Sales by Product', displayData.charts.products, 'product');
+        drawBarChart(repChart, 'Sales by Representative', displayData.charts.reps, 'rep');
+      }
+      
+      // =====================================================
+      // DRAW CHARTS
+      // =====================================================
+      
+      function drawTrendChart(data) {
+        var chartData = [['Month', 'Sales']];
+        
+        for (var i = 0; i < data.labels.length; i++) {
+          chartData.push([data.labels[i], data.values[i]]);
+        }
+        
+        var dataTable = google.visualization.arrayToDataTable(chartData);
+        
+        var options = {
+          title: 'Sales Trend Over Time',
+          titleTextStyle: { color: '#1a2a3a', fontSize: 14, bold: true },
+          curveType: 'function',
+          legend: { position: 'top' },
+          hAxis: {
+            title: 'Month',
+            textStyle: { color: '#5e6f8d', fontSize: 11 },
+            titleTextStyle: { color: '#1a2a3a', fontSize: 12 }
+          },
+          vAxis: {
+            title: 'Sales ($)',
+            textStyle: { color: '#5e6f8d', fontSize: 11 },
+            titleTextStyle: { color: '#1a2a3a', fontSize: 12 },
+            format: '$#,###'
+          },
+          colors: ['#1a73e8'],
+          backgroundColor: 'transparent',
+          chartArea: { left: 70, right: 20, top: 50, bottom: 50 },
+          lineWidth: 3,
+          pointSize: 5,
+          animation: { duration: 1000, easing: 'out' }
+        };
+        
+        var chart = new google.visualization.LineChart(trendChart);
+        chart.draw(dataTable, options);
+        
+        // Handle resize
+        window.addEventListener('resize', function() {
+          chart.draw(dataTable, options);
+        });
+      }
+      
+      function drawPieChart(container, title, data, id) {
+        var chartData = [['Category', 'Sales']];
+        
+        for (var i = 0; i < data.labels.length; i++) {
+          chartData.push([data.labels[i], data.values[i]]);
+        }
+        
+        var dataTable = google.visualization.arrayToDataTable(chartData);
+        
+        var colors = ['#1a73e8', '#34a853', '#f5a623', '#ea4335', '#9c27b0', '#00bcd4'];
+        
+        var options = {
+          title: title,
+          titleTextStyle: { color: '#1a2a3a', fontSize: 14, bold: true },
+          legend: { position: 'right', textStyle: { fontSize: 11 } },
+          colors: colors.slice(0, data.labels.length),
+          backgroundColor: 'transparent',
+          chartArea: { left: 10, right: 10, top: 40, bottom: 10 },
+          pieSliceText: 'percentage',
+          animation: { duration: 800, easing: 'out' }
+        };
+        
+        var chart = new google.visualization.PieChart(container);
+        chart.draw(dataTable, options);
+        
+        window.addEventListener('resize', function() {
+          chart.draw(dataTable, options);
+        });
+      }
+      
+      function drawBarChart(container, title, data, id) {
+        var chartData = [['Category', 'Sales']];
+        
+        for (var i = 0; i < data.labels.length; i++) {
+          chartData.push([data.labels[i], data.values[i]]);
+        }
+        
+        var dataTable = google.visualization.arrayToDataTable(chartData);
+        
+        var colors = ['#1a73e8', '#34a853', '#f5a623', '#ea4335', '#9c27b0', '#00bcd4'];
+        
+        var options = {
+          title: title,
+          titleTextStyle: { color: '#1a2a3a', fontSize: 14, bold: true },
+          legend: { position: 'top' },
+          hAxis: {
+            title: 'Sales ($)',
+            textStyle: { color: '#5e6f8d', fontSize: 11 },
+            titleTextStyle: { color: '#1a2a3a', fontSize: 12 },
+            format: '$#,###'
+          },
+          vAxis: {
+            title: 'Representative',
+            textStyle: { color: '#5e6f8d', fontSize: 11 },
+            titleTextStyle: { color: '#1a2a3a', fontSize: 12 }
+          },
+          colors: colors.slice(0, data.labels.length),
+          backgroundColor: 'transparent',
+          chartArea: { left: 100, right: 20, top: 50, bottom: 40 },
+          animation: { duration: 800, easing: 'out' },
+          bars: 'horizontal'
+        };
+        
+        var chart = new google.visualization.BarChart(container);
+        chart.draw(dataTable, options);
+        
+        window.addEventListener('resize', function() {
+          chart.draw(dataTable, options);
+        });
+      }
+      
+      // =====================================================
+      // HELPER FUNCTIONS
+      // =====================================================
+      
+      function formatNumber(num) {
+        if (typeof num !== 'number') return num;
+        return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      }
+      
+      function showError(message) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+      }
+      
+      function hideError() {
+        errorDiv.style.display = 'none';
+      }
+      
+      function showLoading() {
+        loading.style.display = 'block';
+      }
+      
+      function hideLoading() {
+        loading.style.display = 'none';
+      }
+      
+      // =====================================================
+      // ADD SAMPLE DATA
+      // =====================================================
+      
+      function addSampleData() {
+        if (!confirm('⚠️ This will add sample sales data to your sheet.\n\nContinue?')) {
+          return;
+        }
+        
+        showLoading();
+        hideError();
+        
+        google.script.run
+          .withSuccessHandler(function() {
+            hideLoading();
+            loadDashboard();
+          })
+          .withFailureHandler(function(error) {
+            hideLoading();
+            showError('❌ Error: ' + error.message);
+          })
+          .addSampleSalesData();
+      }
+      
+      // =====================================================
+      // EVENT LISTENERS
+      // =====================================================
+      
+      refreshBtn.addEventListener('click', loadDashboard);
+      resetBtn.addEventListener('click', function() {
+        regionFilter.value = 'All';
+        productFilter.value = 'All';
+        loadDashboard();
+      });
+      addSampleBtn.addEventListener('click', addSampleData);
+      
+      // Auto-refresh when filters change
+      regionFilter.addEventListener('change', loadDashboard);
+      productFilter.addEventListener('change', loadDashboard);
+      
+      // =====================================================
+      // KEYBOARD SHORTCUTS
+      // =====================================================
+      
+      document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+          e.preventDefault();
+          refreshBtn.click();
+        }
+      });
+      
+      // =====================================================
+      // INITIAL LOAD
+      // =====================================================
+      
+      document.addEventListener('DOMContentLoaded', function() {
+        loadDashboard();
+        
+        console.log('📊 Keyboard shortcuts:');
+        console.log('  Ctrl+R = Refresh dashboard');
+      });
+      
+      // =====================================================
+      // AUTO-REFRESH EVERY 5 MINUTES
+      // =====================================================
+      
+      setInterval(function() {
+        loadDashboard();
+      }, 300000); // 5 minutes
+      
+      // =====================================================
+      // END OF JAVASCRIPT
+      // =====================================================
+    </script>
+    <!-- Load Google Charts -->
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+  </body>
+</html>
