@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!--
+      =====================================================
+      FROM SPREADSHEET TO WEB APP - CHAPTER 10
+      Report Generator
+      
+      This web app generates professional PDF reports
+      from Google Sheets data.
+      =====================================================
+    -->
+    <style>
+      /* ===== Base Reset ===== */
+      * { box-sizing: border-box; }
+      
+      body {
+        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        background: #f4f7fc;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1a2a3a;
+        line-height: 1.6;
+        min-height: 100vh;
+      }
+      
+      .container {
+        max-width: 1100px;
+        width: 100%;
+        margin: 0 auto;
+        background: #ffffff;
+        padding: 35px 40px;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      }
+      
+      h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0 0 4px 0;
+        color: #0b1a2b;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      .subtitle {
+        color: #5e6f8d;
+        font-size: 16px;
+        margin: 0 0 24px 0;
+        border-bottom: 2px solid #eef2f7;
+        padding-bottom: 16px;
+      }
+      
+      /* ===== Form ===== */
+      .form-group {
+        margin-bottom: 16px;
+      }
+      
+      .form-group label {
+        display: block;
+        font-weight: 500;
+        font-size: 14px;
+        margin-bottom: 4px;
+        color: #1a2a3a;
+      }
+      
+      .form-group .hint {
+        font-size: 12px;
+        color: #8a9bb5;
+        font-weight: 400;
+      }
+      
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 10px 14px;
+        border: 2px solid #dce3ed;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+        background: white;
+        color: #1a2a3a;
+      }
+      
+      .form-group input:focus,
+      .form-group select:focus {
+        border-color: #1a73e8;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.12);
+      }
+      
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      
+      /* ===== Buttons ===== */
+      .button-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin: 16px 0;
+      }
+      
+      .btn-primary {
+        background: #1a73e8;
+        color: white;
+        border: none;
+        padding: 12px 32px;
+        font-size: 16px;
+        font-weight: 500;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.2s, opacity 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .btn-primary:hover {
+        background: #1557b0;
+      }
+      
+      .btn-primary:disabled {
+        background: #a0b8d4;
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+      
+      .btn-secondary {
+        background: #eef2f7;
+        color: #1a2a3a;
+        border: none;
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: 500;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .btn-secondary:hover {
+        background: #dce3ed;
+      }
+      
+      .btn-success {
+        background: #34a853;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: 500;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .btn-success:hover {
+        background: #2d9248;
+      }
+      
+      /* ===== Tabs ===== */
+      .tabs {
+        display: flex;
+        gap: 4px;
+        background: #f4f7fc;
+        border-radius: 10px;
+        padding: 4px;
+        margin-bottom: 20px;
+      }
+      
+      .tab {
+        padding: 10px 20px;
+        border: none;
+        background: transparent;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        color: #5e6f8d;
+        transition: background 0.2s, color 0.2s;
+        flex: 1;
+        text-align: center;
+      }
+      
+      .tab:hover {
+        background: #e6edf5;
+      }
+      
+      .tab.active {
+        background: #ffffff;
+        color: #1a73e8;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      }
+      
+      .tab-content {
+        display: none;
+      }
+      
+      .tab-content.active {
+        display: block;
+      }
+      
+      /* ===== Report Preview ===== */
+      .preview-container {
+        background: #f8faff;
+        border: 1px solid #e6edf5;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 16px 0;
+        max-height: 500px;
+        overflow-y: auto;
+      }
+      
+      .preview-container iframe {
+        width: 100%;
+        height: 600px;
+        border: none;
+        border-radius: 8px;
+      }
+      
+      /* ===== Loading ===== */
+      #loading {
+        display: none;
+        padding: 20px;
+        text-align: center;
+        color: #5e6f8d;
+      }
+      
+      #loading .spinner {
+        display: inline-block;
+        animation: spin 1s linear infinite;
+        font-size: 24px;
+        margin-bottom: 8px;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* ===== Error ===== */
+      #error {
+        display: none;
+        padding: 16px 20px;
+        background: #fff5f5;
+        border-radius: 10px;
+        border-left: 4px solid #d93025;
+        color: #a12b2b;
+        margin-bottom: 16px;
+      }
+      
+      /* ===== Success ===== */
+      #success {
+        display: none;
+        padding: 16px 20px;
+        background: #e6f4ea;
+        border-radius: 10px;
+        border-left: 4px solid #34a853;
+        color: #1e7e34;
+        margin-bottom: 16px;
+      }
+      
+      /* ===== Footer ===== */
+      .footer {
+        margin-top: 28px;
+        font-size: 13px;
+        color: #8a9bb5;
+        text-align: center;
+        border-top: 1px solid #eef2f7;
+        padding-top: 18px;
+      }
+      
+      .footer .book-link {
+        font-weight: 500;
+        color: #1a2a3a;
+      }
+      
+      /* ===== Responsive ===== */
+      @media (max-width: 768px) {
+        body { padding: 16px; }
+        .container { padding: 20px 16px; border-radius: 12px; }
+        h1 { font-size: 22px; }
+        .form-row { grid-template-columns: 1fr; }
+        .button-group { flex-direction: column; }
+        .btn-primary, .btn-secondary, .btn-success { width: 100%; justify-content: center; }
+        .tabs { flex-wrap: wrap; }
+        .tab { flex: none; padding: 8px 14px; font-size: 13px; }
+        .preview-container { max-height: 300px; }
+        .preview-container iframe { height: 400px; }
+      }
+      
+      @media (max-width: 400px) {
+        .container { padding: 16px 12px; }
+        h1 { font-size: 19px; }
+      }
+    </style>
+  </head>
+  
+  <body>
+    <div class="container">
+      <!-- ===== HEADER ===== -->
+      <h1>
+        <span>📄</span> Report Generator
+      </h1>
+      <div class="subtitle">
+        Generate professional PDF reports from your data with one click.
+      </div>
+      
+      <!-- ===== TABS ===== -->
+      <div class="tabs">
+        <button class="tab active" data-tab="generate">📝 Generate Report</button>
+        <button class="tab" data-tab="preview">👁️ Preview</button>
+        <button class="tab" data-tab="email">📧 Email</button>
+      </div>
+      
+      <!-- ===== ERROR ===== -->
+      <div id="error"></div>
+      
+      <!-- ===== SUCCESS ===== -->
+      <div id="success"></div>
+      
+      <!-- ===== LOADING ===== -->
+      <div id="loading">
+        <div class="spinner">⏳</div>
+        <div>Generating report... Please wait.</div>
+      </div>
+      
+      <!-- ===================================================== -->
+      <!-- TAB 1: GENERATE REPORT -->
+      <!-- ===================================================== -->
+      <div class="tab-content active" id="tab-generate">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="reportTitle">Report Title</label>
+            <input type="text" id="reportTitle" value="Monthly Sales Report" placeholder="Enter report title">
+          </div>
+          <div class="form-group">
+            <label for="companyName">Company Name</label>
+            <input type="text" id="companyName" value="Your Company" placeholder="Enter company name">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="startDate">Start Date <span class="hint">(optional)</span></label>
+            <input type="date" id="startDate">
+          </div>
+          <div class="form-group">
+            <label for="endDate">End Date <span class="hint">(optional)</span></label>
+            <input type="date" id="endDate">
+          </div>
+        </div>
+        
+        <div class="button-group">
+          <button class="btn-primary" id="generateBtn">📄 Generate Report</button>
+          <button class="btn-secondary" id="addSampleBtn">📥 Add Sample Data</button>
+          <button class="btn-secondary" id="clearBtn">🗑️ Clear</button>
+        </div>
+      </div>
+      
+      <!-- ===================================================== -->
+      <!-- TAB 2: PREVIEW -->
+      <!-- ===================================================== -->
+      <div class="tab-content" id="tab-preview">
+        <div id="previewInfo" style="margin-bottom: 12px; color: #5e6f8d;">
+          Generate a report first to see the preview.
+        </div>
+        <div class="preview-container" id="previewContainer">
+          <div style="text-align: center; color: #8a9bb5; padding: 60px 20px;">
+            <div style="font-size: 48px; margin-bottom: 12px;">📄</div>
+            <div style="font-size: 18px; font-weight: 500;">No Report Generated</div>
+            <div style="font-size: 14px;">Go to the "Generate Report" tab to create a report.</div>
+          </div>
+        </div>
+        <div class="button-group" id="previewActions" style="display: none;">
+          <button class="btn-success" id="downloadPdfBtn">⬇️ Download PDF</button>
+          <button class="btn-secondary" id="saveDriveBtn">💾 Save to Drive</button>
+        </div>
+      </div>
+      
+      <!-- ===================================================== -->
+      <!-- TAB 3: EMAIL -->
+      <!-- ===================================================== -->
+      <div class="tab-content" id="tab-email">
+        <div class="form-group">
+          <label for="emailTo">Recipient Email</label>
+          <input type="email" id="emailTo" placeholder="recipient@example.com">
+        </div>
+        <div class="form-group">
+          <label for="emailSubject">Subject <span class="hint">(auto-generated if blank)</span></label>
+          <input type="text" id="emailSubject" placeholder="Monthly Sales Report">
+        </div>
+        <div class="button-group">
+          <button class="btn-success" id="sendEmailBtn">📧 Send Email</button>
+        </div>
+        <div style="margin-top: 12px; font-size: 13px; color: #8a9bb5;">
+          💡 Generate a report first, then send it via email with the PDF attached.
+        </div>
+      </div>
+      
+      <!-- ===== FOOTER ===== -->
+      <div class="footer">
+        Built with ❤️ using Google Apps Script
+        <br>
+        📖 From <strong class="book-link">From Spreadsheet to Web App</strong>
+      </div>
+    </div>
+    
+    <!-- ===================================================== -->
+    <!-- JAVASCRIPT: Frontend Logic -->
+    <!-- ===================================================== -->
+    <script>
+      // =====================================================
+      // DOM REFERENCES
+      // =====================================================
+      var tabs = document.querySelectorAll('.tab');
+      var tabContents = {
+        generate: document.getElementById('tab-generate'),
+        preview: document.getElementById('tab-preview'),
+        email: document.getElementById('tab-email')
+      };
+      
+      var reportTitle = document.getElementById('reportTitle');
+      var companyName = document.getElementById('companyName');
+      var startDate = document.getElementById('startDate');
+      var endDate = document.getElementById('endDate');
+      var generateBtn = document.getElementById('generateBtn');
+      var addSampleBtn = document.getElementById('addSampleBtn');
+      var clearBtn = document.getElementById('clearBtn');
+      var downloadPdfBtn = document.getElementById('downloadPdfBtn');
+      var saveDriveBtn = document.getElementById('saveDriveBtn');
+      var sendEmailBtn = document.getElementById('sendEmailBtn');
+      var emailTo = document.getElementById('emailTo');
+      var emailSubject = document.getElementById('emailSubject');
+      
+      var loading = document.getElementById('loading');
+      var errorDiv = document.getElementById('error');
+      var successDiv = document.getElementById('success');
+      var previewContainer = document.getElementById('previewContainer');
+      var previewInfo = document.getElementById('previewInfo');
+      var previewActions = document.getElementById('previewActions');
+      
+      var currentHtml = '';
+      var currentFileName = '';
+      
+      // =====================================================
+      // TABS
+      // =====================================================
+      tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          tabs.forEach(function(t) { t.classList.remove('active'); });
+          tab.classList.add('active');
+          
+          Object.keys(tabContents).forEach(function(key) {
+            tabContents[key].classList.remove('active');
+          });
+          
+          var target = tab.dataset.tab;
+          tabContents[target].classList.add('active');
+        });
+      });
+      
+      // =====================================================
+      // GENERATE REPORT
+      // =====================================================
+      generateBtn.addEventListener('click', function() {
+        var title = reportTitle.value || 'Sales Report';
+        var company = companyName.value || 'Your Company';
+        var start = startDate.value || '';
+        var end = endDate.value || '';
+        
+        showLoading();
+        hideError();
+        hideSuccess();
+        
+        google.script.run
+          .withSuccessHandler(function(response) {
+            hideLoading();
+            if (!response.success) {
+              showError('❌ ' + response.error);
+              return;
+            }
+            
+            currentHtml = response.html;
+            currentFileName = title + ' - ' + new Date().toISOString().split('T')[0];
+            
+            showSuccess('✅ Report generated successfully! ' + response.dataCount + ' records included.');
+            
+            // Update preview
+            updatePreview(response.html);
+            
+            // Enable email tab
+            document.querySelector('.tab[data-tab="email"]').style.opacity = '1';
+            
+            // Log summary
+            console.log('📄 Report generated:', response.summary);
+          })
+          .withFailureHandler(function(error) {
+            hideLoading();
+            showError('❌ Error: ' + error.message);
+          })
+          .generateReportWebApp(title, company, start, end);
+      });
+      
+      function updatePreview(html) {
+        var iframe = document.createElement('iframe');
+        iframe.srcdoc = html;
+        previewContainer.innerHTML = '';
+        previewContainer.appendChild(iframe);
+        previewActions.style.display = 'flex';
+        previewInfo.textContent = '✅ Report generated. You can preview it below.';
+      }
+      
+      // =====================================================
+      // DOWNLOAD PDF
+      // =====================================================
+      downloadPdfBtn.addEventListener('click', function() {
+        if (!currentHtml) {
+          showError('Please generate a report first.');
+          return;
+        }
+        
+        showLoading();
+        hideError();
+        
+        google.script.run
+          .withSuccessHandler(function(response) {
+            hideLoading();
+            if (!response.success) {
+              showError('❌ ' + response.error);
+              return;
+            }
+            
+            // Download the PDF
+            window.open(response.fileUrl, '_blank');
+            showSuccess('✅ PDF downloaded successfully!');
+          })
+          .withFailureHandler(function(error) {
+            hideLoading();
+            showError('❌ Error: ' + error.message);
+          })
+          .downloadPDFWebApp(currentHtml, currentFileName);
+      });
+      
+      // =====================================================
+      // SAVE TO DRIVE
+      // =====================================================
+      saveDriveBtn.addEventListener('click', function() {
+        if (!currentHtml) {
+          showError('Please generate a report first.');
+          return;
+        }
+        
+        var folderId = prompt('Enter Google Drive folder ID (leave blank for root folder):');
+        
+        showLoading();
+        hideError();
+        
+        google.script.run
+          .withSuccessHandler(function(response) {
+            hideLoading();
+            if (!response.success) {
+              showError('❌ ' + response.error);
+              return;
+            }
+            
+            showSuccess('✅ PDF saved to Google Drive!\n\nFile: ' + response.fileName + '\nID: ' + response.fileId);
+          })
+          .withFailureHandler(function(error) {
+            hideLoading();
+            showError('❌ Error: ' + error.message);
+          })
+          .savePDFWebApp(currentHtml, currentFileName, folderId);
+      });
+      
+      // =====================================================
+      // SEND EMAIL
+      // =====================================================
+      sendEmailBtn.addEventListener('click', function() {
+        if (!currentHtml) {
+          showError('Please generate a report first.');
+          return;
+        }
+        
+        var email = emailTo.value.trim();
+        if (!email) {
+          showError('Please enter a recipient email address.');
+          return;
+        }
+        
+        if (!email.includes('@') || !email.includes('.')) {
+          showError('Please enter a valid email address.');
+          return;
+        }
+        
+        var title = reportTitle.value || 'Sales Report';
+        var company = companyName.value || 'Your Company';
+        var subject = emailSubject.value || title;
+        
+        showLoading();
+        hideError();
+        hideSuccess();
+        
+        google.script.run
+          .withSuccessHandler(function(response) {
+            hideLoading();
+            if (!response.success) {
+              showError('❌ ' + response.error);
+              return;
+            }
+            
+            showSuccess('✅ Email sent successfully to ' + email + '!');
+            emailTo.value = '';
+          })
+          .withFailureHandler(function(error) {
+            hideLoading();
+            showError('❌ Error: ' + error.message);
+          })
+          .sendEmailWebApp(email, title, company, currentHtml, currentFileName);
+      });
+      
+      // =====================================================
+      // ADD SAMPLE DATA
+      // =====================================================
+      addSampleBtn.addEventListener('click', function() {
+        if (!confirm('⚠️ This will add sample sales data to your sheet.\n\nContinue?')) {
+          return;
+        }
+        
+        showLoading();
+        hideError();
+        
+        google.script.run
+          .withSuccessHandler(function() {
+            hideLoading();
+            showSuccess('✅ Sample data added! Generate a report to see it in action.');
+          })
+          .withFailureHandler(function(error) {
+            hideLoading();
+            showError('❌ Error: ' + error.message);
+          })
+          .addSampleSalesData();
+      });
+      
+      // =====================================================
+      // CLEAR
+      // =====================================================
+      clearBtn.addEventListener('click', function() {
+        reportTitle.value = 'Monthly Sales Report';
+        companyName.value = 'Your Company';
+        startDate.value = '';
+        endDate.value = '';
+        currentHtml = '';
+        currentFileName = '';
+        previewContainer.innerHTML = '<div style="text-align: center; color: #8a9bb5; padding: 60px 20px;">' +
+          '<div style="font-size: 48px; margin-bottom: 12px;">📄</div>' +
+          '<div style="font-size: 18px; font-weight: 500;">No Report Generated</div>' +
+          '<div style="font-size: 14px;">Go to the "Generate Report" tab to create a report.</div>' +
+          '</div>';
+        previewActions.style.display = 'none';
+        previewInfo.textContent = 'Generate a report first to see the preview.';
+        hideSuccess();
+        hideError();
+      });
+      
+      // =====================================================
+      // HELPER FUNCTIONS
+      // =====================================================
+      function showError(message) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        successDiv.style.display = 'none';
+      }
+      
+      function hideError() {
+        errorDiv.style.display = 'none';
+      }
+      
+      function showSuccess(message) {
+        successDiv.textContent = message;
+        successDiv.style.display = 'block';
+        errorDiv.style.display = 'none';
+      }
+      
+      function hideSuccess() {
+        successDiv.style.display = 'none';
+      }
+      
+      function showLoading() {
+        loading.style.display = 'block';
+      }
+      
+      function hideLoading() {
+        loading.style.display = 'none';
+      }
+      
+      // =====================================================
+      // KEYBOARD SHORTCUTS
+      // =====================================================
+      document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          generateBtn.click();
+        }
+      });
+      
+      // =====================================================
+      // INITIAL LOAD
+      // =====================================================
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('📄 Keyboard shortcuts:');
+        console.log('  Ctrl+Enter = Generate report');
+      });
+      
+      // =====================================================
+      // END OF JAVASCRIPT
+      // =====================================================
+    </script>
+  </body>
+</html>
