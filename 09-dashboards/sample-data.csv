@@ -1,0 +1,13 @@
+Date,Sales,Region,Product,Sales Rep
+2024-01-01,12500,North,Product A,Sarah
+2024-01-02,8200,South,Product B,Mike
+2024-01-03,15300,East,Product A,John
+2024-01-04,9800,West,Product C,Lisa
+2024-01-05,11200,North,Product B,Sarah
+2024-01-06,13500,South,Product C,Mike
+2024-01-07,9200,East,Product D,John
+2024-01-08,16800,West,Product A,Lisa
+2024-01-09,14500,North,Product C,Sarah
+2024-01-10,7800,South,Product A,Mike
+2024-01-11,16200,East,Product B,John
+2024-01-12,10500,West,Product D,Lisa
